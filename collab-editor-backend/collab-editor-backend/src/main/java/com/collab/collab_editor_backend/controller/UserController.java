@@ -1,63 +1,102 @@
 package com.collab.collab_editor_backend.controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import com.collab.collab_editor_backend.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import com.collab.collab_editor_backend.entity.User;
+import com.collab.collab_editor_backend.mapper.UserMapper;
+import com.collab.collab_editor_backend.util.JwtUtil;
+import com.collab.collab_editor_backend.util.Result;
 import java.util.HashMap;
 import java.util.Map;
-
-/**
- * 用户控制器：登录接口（生成 JWT 令牌）
- */
 
 @RestController
 public class UserController {
 
+    // 注入用户Mapper（操作数据库t_user表）
+    @Autowired
+    private UserMapper userMapper;
+
+    // 注入JWT工具类（生成Token）
     @Autowired
     private JwtUtil jwtUtil;
 
+    // 注入密码加密工具（Spring Security提供，已在WebConfig中配置Bean）
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     /**
-     * 登录接口（无需令牌，公开访问）
-     * @param username 用户名（模拟输入，实际需查数据库验证）
-     * @param password 密码（模拟输入，实际需加密验证）
-     * @return 包含 JWT 令牌的结果
+     * 注册接口（/api/register）- 补全实现
      */
-    @PostMapping("/api/login")
-    public Map<String, Object> login(
-            @RequestParam("username") String username,
-            @RequestParam("password") String password) {
-        // 1. 模拟数据库验证（实际项目需替换为：查询数据库 -> 比对加密后的密码）
-        // 这里简化：假设用户名=admin，密码=123456 为合法用户
-        if (!"admin".equals(username) || !"123456".equals(password)) {
-            Map<String, Object> errorResult = new HashMap<>();
-            errorResult.put("code", 400);
-            errorResult.put("message", "用户名或密码错误");
-            return errorResult;
+    @PostMapping("/api/register")
+    public Result register(@RequestBody User user) {
+        // 1. 校验参数（用户名、密码不能为空）
+        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            return Result.error("用户名不能为空");
+        }
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            return Result.error("密码不能为空");
         }
 
-        // 2. 验证通过，生成 JWT 令牌（传入用户ID=1，用户名=admin，实际需从数据库获取）
-        String token = jwtUtil.generateToken(1L, username);
+        // 2. 校验用户名是否已存在（查询数据库）
+        User existingUser = userMapper.selectByUsername(user.getUsername());
+        if (existingUser != null) {
+            return Result.error("用户名已被占用，请更换");
+        }
 
-        // 3. 返回令牌给前端（前端需存储令牌，后续请求在 Header 中携带）
-        Map<String, Object> successResult = new HashMap<>();
-        successResult.put("code", 200);
-        successResult.put("message", "登录成功");
-        successResult.put("token", token); // 令牌，前端需保存（如 localStorage）
-        successResult.put("username", username);
-        return successResult;
+        // 3. 密码加密（BCrypt算法，不可逆）
+        String encryptedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encryptedPassword);
+
+        // 4. 保存用户到数据库（MyBatis-Plus的insert方法）
+        int insert = userMapper.insert(user);
+        if (insert > 0) {
+            return Result.success("注册成功，请登录");
+        } else {
+            return Result.error("注册失败，请重试");
+        }
     }
 
     /**
-     * 测试需要认证的接口（/api/** 开头，会被拦截器验证令牌）
+     * 登录接口（/api/login）- 修正参数接收和逻辑
+     */
+    @PostMapping("/api/login")
+    public Result login(@RequestBody User user) {
+        // 1. 校验参数
+        if (user.getUsername() == null || user.getPassword() == null) {
+            return Result.error("用户名或密码不能为空");
+        }
+
+        // 2. 查询数据库中的用户
+        User dbUser = userMapper.selectByUsername(user.getUsername());
+        if (dbUser == null) {
+            return Result.error("用户名或密码错误");
+        }
+
+        // 3. 比对密码（加密后的密码无法解密，用matches方法校验）
+        boolean passwordMatch = passwordEncoder.matches(user.getPassword(), dbUser.getPassword());
+        if (!passwordMatch) {
+            return Result.error("用户名或密码错误");
+        }
+
+        // 4. 生成JWT Token（传入用户ID和用户名）
+        String token = jwtUtil.generateToken(dbUser.getId(), dbUser.getUsername());
+
+        // 5. 返回结果（包含Token）
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", token);
+        data.put("username", dbUser.getUsername());
+        data.put("userId", dbUser.getId());
+        return Result.success("登录成功", data);
+    }
+
+    /**
+     * 测试接口（无需删除，用于验证认证）
      */
     @PostMapping("/api/test/auth")
-    public Map<String, Object> testAuth() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("code", 200);
-        result.put("message", "接口访问成功（已通过 JWT 认证）");
-        return result;
+    public Result testAuth() {
+        return Result.success("接口访问成功（已通过JWT认证）");
     }
 }

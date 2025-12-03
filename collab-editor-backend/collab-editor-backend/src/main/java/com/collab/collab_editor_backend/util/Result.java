@@ -26,7 +26,7 @@ public class Result<T> {
      * 成功响应（带数据）
      */
     public static <T> Result<T> success(T data) {
-        return new Result<>(200, "操作成功", data); // 修正语法错误
+        return new Result<>(200, "操作成功", data);
     }
 
     /**
@@ -34,6 +34,16 @@ public class Result<T> {
      */
     public static <T> Result<T> success() {
         return new Result<>(200, "操作成功", null);
+    }
+
+    // 新增：成功响应（带自定义消息，无数据）→ 适配注册接口返回
+    public static <T> Result<T> success(String message) {
+        return new Result<>(200, message, null);
+    }
+
+    // 新增：成功响应（带自定义消息+数据）→ 适配登录接口返回Token
+    public static <T> Result<T> success(String message, T data) {
+        return new Result<>(200, message, data);
     }
 
     /**

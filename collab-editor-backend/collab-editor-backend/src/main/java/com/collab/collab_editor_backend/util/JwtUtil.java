@@ -4,67 +4,80 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.SecretKey;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class JwtUtil {
+    private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
+    // 直接用原始密钥字符串（无需Base64）
     @Value("${jwt.secret}")
-    private String base64Secret; // Base64编码的密钥（配置文件中需填写）
+    private String rawSecret;
 
     @Value("${jwt.expiration}")
-    private long expiration; // 有效期（毫秒，配置文件中需填写）
+    private long expiration;
 
     @Value("${jwt.header}")
-    private String header; // 请求头名称（如"Authorization"，配置文件中需填写）
+    private String header;
 
-    // 解析Base64密钥为加密密钥（核心）
+    // 直接用UTF-8编码生成密钥（无Base64解码环节）
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Base64.getDecoder().decode(base64Secret);
+        log.info("当前使用的原始密钥：{}", rawSecret);
+        byte[] keyBytes = rawSecret.getBytes(StandardCharsets.UTF_8);
+        log.info("密钥UTF-8编码后长度：{}字节", keyBytes.length);
+        // 强制验证密钥长度（HS256必须≥32字节）
+        if (keyBytes.length < 32) {
+            throw new RuntimeException("密钥长度不足32字节！当前：" + keyBytes.length);
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String getHeader() {
-        return header;
-    }
-
-    // 生成Token（需要userId和username，与调用处匹配）
+    // 生成Token（逻辑不变，密钥来源简化）
     public String generateToken(Long userId, String username) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId); // 存入用户ID
-        claims.put("username", username); // 存入用户名
-        return Jwts.builder()
-                .setClaims(claims) // 设置自定义数据
-                .setExpiration(new Date(System.currentTimeMillis() + expiration)) // 过期时间
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // 签名（使用合规密钥）
+        claims.put("userId", userId);
+        claims.put("username", username);
+
+        String token = Jwts.builder()
+                .setClaims(claims)
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+        log.info("生成的完整Token：{}", token); // 打印完整Token，让用户直接复制
+        return token;
     }
 
-    // 解析Token，获取全部数据
+    // 解析Token（逻辑不变，密钥来源简化）
     public Claims parseToken(String token) {
+        log.info("待解析的Token：{}", token);
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey()) // 验证密钥
+                .setSigningKey(getSigningKey()) // 和生成时用同一个密钥
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    // 补充：从Token中提取用户ID（后续拦截器需要）
-    public Long getUserIdFromToken(String token) {
+    // 解析用户ID（保持不变）
+    public Long getUserIdFromToken(String authorizationHeader) {
+        String token = authorizationHeader.replace("Bearer ", "").trim();
         Claims claims = parseToken(token);
         return claims.get("userId", Long.class);
     }
 
-    // 补充：从Token中提取用户名（可选）
     public String getUsernameFromToken(String token) {
         Claims claims = parseToken(token);
         return claims.get("username", String.class);
+    }
+
+    public String getHeader() {
+        return header;
     }
 }

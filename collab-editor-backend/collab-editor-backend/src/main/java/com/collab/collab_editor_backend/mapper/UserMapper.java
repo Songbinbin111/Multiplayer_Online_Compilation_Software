@@ -2,11 +2,12 @@ package com.collab.collab_editor_backend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.collab.collab_editor_backend.entity.User;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
-@Mapper// 标记为 MyBatis Mapper 接口
 public interface UserMapper extends BaseMapper<User> {
-    // 自定义查询：根据用户名查询用户（登录/注册时用）
+
+    // 按用户名查询用户（注解方式，直接执行SQL）
+    @Select("SELECT id, username, password, nickname, create_time, update_time FROM t_user WHERE username = #{username}")
     User selectByUsername(@Param("username") String username);
 }
