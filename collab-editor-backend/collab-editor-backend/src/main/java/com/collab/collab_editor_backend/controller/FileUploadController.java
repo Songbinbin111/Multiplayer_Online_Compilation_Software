@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 // 1. @RestController：标识这是一个接口类（返回JSON数据，不跳转页面）
-@RestController
+// 暂时注释掉这个控制器，因为它依赖于MinIOUtil
+// @RestController
 public class FileUploadController {
 
     // 2. @Autowired：自动注入MinIOUtil（之前写的MinIO工具类，无需手动new）

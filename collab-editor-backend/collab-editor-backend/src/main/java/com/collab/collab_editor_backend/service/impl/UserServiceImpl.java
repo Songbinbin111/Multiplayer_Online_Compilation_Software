@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -47,7 +49,7 @@ public class UserServiceImpl implements UserService {
         // 3. 保存用户到数据库
         userMapper.insert(user);
 
-        return Result.success("注册成功，请登录");
+        return Result.successWithMessage("注册成功，请登录");
     }
 
     /**
@@ -68,5 +70,16 @@ public class UserServiceImpl implements UserService {
 
         // 3. 生成JWT令牌（传递用户ID和用户名）
         return jwtUtil.generateToken(user.getId(), user.getUsername());
+    }
+    
+    /**
+     * 根据用户名列表查询用户实现
+     */
+    @Override
+    public List<User> getUsersByUsernameList(List<String> usernameList) {
+        if (usernameList == null || usernameList.isEmpty()) {
+            return List.of();
+        }
+        return userMapper.selectByUsernameList(usernameList);
     }
 }

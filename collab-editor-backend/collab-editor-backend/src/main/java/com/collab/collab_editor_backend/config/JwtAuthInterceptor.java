@@ -24,14 +24,20 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
         log.info("=== JWT拦截器开始处理请求 ===");
         log.info("请求URL: {}, 请求方法: {}", request.getRequestURI(), request.getMethod());
 
-        // 1. 获取请求头中的Authorization字段
+        // 1. 放行OPTIONS请求（CORS预检请求）
+        if ("OPTIONS".equals(request.getMethod())) {
+            log.info("=== OPTIONS请求，直接放行 ===");
+            return true;
+        }
+
+        // 2. 获取请求头中的Authorization字段
         String authorizationHeader = request.getHeader(jwtUtil.getHeader());
         log.info("=== 接收到的请求头列表 ===");
         request.getHeaderNames().asIterator().forEachRemaining(headerName -> {
             log.info("{}: {}", headerName, request.getHeader(headerName));
         });
 
-        // 2. 验证Token是否存在
+        // 3. 验证Token是否存在
         if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
             log.error("=== Token不存在 ===");
             throw new RuntimeException("Token不存在，请先登录");

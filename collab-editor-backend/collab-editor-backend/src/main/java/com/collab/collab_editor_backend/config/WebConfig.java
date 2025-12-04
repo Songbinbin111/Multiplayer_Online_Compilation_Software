@@ -12,17 +12,13 @@ import com.collab.collab_editor_backend.util.JwtUtil;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-
-    // 2. 新增：定义BCryptPasswordEncoder Bean（解决注入失败问题）
+    // 1. 新增：定义BCryptPasswordEncoder Bean（解决注入失败问题）
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 3. CORS跨域配置（之前的配置，保持不变）
+    // 2. CORS跨域配置（之前的配置，保持不变）
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -33,7 +29,5 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true)
                 .maxAge(3600);
     }
-
-
 
 }

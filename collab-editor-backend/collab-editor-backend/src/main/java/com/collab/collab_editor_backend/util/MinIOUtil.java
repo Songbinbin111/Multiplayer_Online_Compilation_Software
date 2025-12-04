@@ -18,7 +18,6 @@ import java.io.UnsupportedEncodingException;
 /**
  * MinIO 工具类：适配本地 MinIO 环境，封装文件上传、删除操作
  */
-@Component
 public class MinIOUtil {
 
     @Autowired

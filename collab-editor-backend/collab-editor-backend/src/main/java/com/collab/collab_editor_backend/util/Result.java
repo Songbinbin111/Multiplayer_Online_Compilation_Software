@@ -37,12 +37,12 @@ public class Result<T> {
     }
 
     // 新增：成功响应（带自定义消息，无数据）→ 适配注册接口返回
-    public static <T> Result<T> success(String message) {
+    public static <T> Result<T> successWithMessage(String message) {
         return new Result<>(200, message, null);
     }
 
     // 新增：成功响应（带自定义消息+数据）→ 适配登录接口返回Token
-    public static <T> Result<T> success(String message, T data) {
+    public static <T> Result<T> successWithMessage(String message, T data) {
         return new Result<>(200, message, data);
     }
 

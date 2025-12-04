@@ -14,6 +14,6 @@ public class OnlineUser {
     private Long userId; // 用户ID，对应表中 user_id 字段
     private Long docId; // 文档ID，对应表中 doc_id 字段
     private String sessionId; // WebSocket会话ID，对应表中 session_id 字段
-    private Integer onlineStatus; // 在线状态，对应表中 online_status 字段
+    private Integer onlineStatus; // 在线状态：0-离线，1-在线，2-编辑中，3-离开
     private LocalDateTime lastActiveTime; // 最后活跃时间，对应表中 last_active_time 字段
 }

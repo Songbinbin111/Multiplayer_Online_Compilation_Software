@@ -1,0 +1,1230 @@
+/* 全局样式 */
+:root {
+  --primary-color: #4a90e2;
+  --secondary-color: #6c757d;
+  --success-color: #5cb85c;
+  --danger-color: #d9534f;
+  --warning-color: #f0ad4e;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --border-color: #dee2e6;
+  --text-color: #212529;
+  --background-color: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 表单样式 */
+.form-container {
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: var(--background-color);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: var(--dark-color);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+}
+
+.form-button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.form-button:hover {
+  background-color: #3a80d2;
+}
+
+.form-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.form-link a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.form-link a:hover {
+  text-decoration: underline;
+}
+
+/* 文档列表样式 */
+.documents-container {
+  padding: 20px;
+}
+
+.documents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.documents-title {
+  color: var(--dark-color);
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.logout-button:hover {
+  background-color: #5c636a;
+}
+
+.create-doc-button {
+  padding: 10px 20px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.create-doc-button:hover {
+  background-color: #4cae4c;
+}
+
+.documents-list {
+  list-style: none;
+  margin-top: 20px;
+}
+
+.document-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.document-item:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.document-info h3 {
+  margin-bottom: 5px;
+  color: var(--dark-color);
+}
+
+.document-info p {
+  color: var(--secondary-color);
+  font-size: 14px;
+}
+
+.edit-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.edit-button:hover {
+  background-color: #3a80d2;
+}
+
+/* 编辑器样式 */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: var(--light-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.editor-title h1 {
+  font-size: 24px;
+  color: var(--dark-color);
+}
+
+.save-status {
+  display: block;
+  font-size: 14px;
+  color: var(--secondary-color);
+  margin-top: 5px;
+}
+
+.save-button {
+  padding: 10px 20px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.save-button:hover {
+  background-color: #4cae4c;
+}
+
+.editor-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 权限面板样式 */
+.permission-panel {
+  background-color: #fff;
+  border-left: 1px solid #e0e0e0;
+  padding: 16px;
+  width: 300px;
+  overflow-y: auto;
+}
+
+.permission-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.permission-panel-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.assign-permission-form {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.assign-permission-form h4 {
+  margin-bottom: 12px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assign-permission-form .user-select,
+.assign-permission-form .permission-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.assign-permission-form .assign-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.assign-permission-form .assign-btn:hover {
+  background-color: #3a80d2;
+}
+
+.assign-permission-form .assign-btn:disabled {
+  background-color: #a0c4f1;
+  cursor: not-allowed;
+}
+
+.permission-list h4 {
+  margin-bottom: 12px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.permission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.permission-user {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.permission-user .username {
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.permission-user .current-user-tag {
+  color: #4a90e2;
+  font-size: 12px;
+}
+
+.permission-type {
+  margin-right: 12px;
+}
+
+.permission-type select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.permission-actions .remove-permission-btn {
+  padding: 4px 8px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.permission-actions .remove-permission-btn:hover {
+  background-color: #d62c1a;
+}
+
+.no-permissions {
+  color: #999;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* 通知面板样式 */
+.notification-container {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-button {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.notification-button:hover {
+  background-color: #f0f0f0;
+}
+
+.notification-icon {
+  display: inline-block;
+}
+
+.unread-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  text-align: center;
+  line-height: 16px;
+}
+
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.notification-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.notification-panel-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.mark-all-read-btn {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.mark-all-read-btn:hover {
+  background-color: #f0f8ff;
+}
+
+.mark-all-read-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.notification-list {
+  padding: 8px 0;
+}
+
+.notification-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.notification-item:hover {
+  background-color: #fafafa;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+}
+
+.notification-type {
+  margin-bottom: 4px;
+}
+
+.notification-type span {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.notification-type-mention {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.notification-type-task {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.notification-type-default {
+  background-color: #f5f5f5;
+  color: #616161;
+}
+
+.notification-content {
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #333;
+}
+
+.notification-time {
+  font-size: 11px;
+  color: #9e9e9e;
+}
+
+.no-notifications {
+  text-align: center;
+  padding: 20px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.quill-editor {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.ql-container.ql-snow {
+  height: calc(100% - 42px);
+  font-size: 16px;
+}
+
+.ql-editor {
+  min-height: 300px;
+}
+
+.online-users-panel {
+  width: 250px;
+  padding: 20px;
+  background-color: var(--light-color);
+  border-left: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+.online-users-panel h3 {
+  margin-bottom: 15px;
+  color: var(--dark-color);
+}
+
+.user-list {
+  list-style: none;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-item:last-child {
+  border-bottom: none;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.user-name {
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: var(--secondary-color);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .editor-content {
+    flex-direction: column;
+  }
+
+  .online-users-panel {
+    width: 100%;
+    height: 200px;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+/* 任务面板样式 */
+.editor-sidebar {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--light-color);
+}
+
+.task-panel {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-color);
+}
+
+.task-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.task-panel-header h3 {
+  color: var(--dark-color);
+  font-size: 18px;
+}
+
+.create-task-btn {
+  padding: 6px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.create-task-btn:hover {
+  background-color: #3a80d2;
+}
+
+.create-task-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.task-title-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.task-content-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.task-assignee-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.task-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-task-btn {
+  padding: 6px 12px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.save-task-btn:hover {
+  background-color: #4cae4c;
+}
+
+.task-list {
+  margin-top: 20px;
+}
+
+.no-tasks {
+  color: var(--secondary-color);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.task-item {
+  background-color: white;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.task-title {
+  color: var(--dark-color);
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+  flex: 1;
+}
+
+.task-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.status-in-progress {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.task-content {
+  color: var(--text-color);
+  font-size: 14px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.task-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--secondary-color);
+  margin-bottom: 10px;
+}
+
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-status-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.status-btn {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--text-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.status-btn:hover {
+  background-color: var(--light-color);
+}
+
+.status-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.delete-task-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--danger-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--danger-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  align-self: flex-start;
+}
+
+.delete-task-btn:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* 评论面板样式 */
+.comment-panel {
+  padding: 20px;
+  background-color: var(--light-color);
+  border-top: 1px solid var(--border-color);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.comment-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.comment-panel-header h3 {
+  color: var(--dark-color);
+  font-size: 18px;
+}
+
+.create-comment-btn {
+  padding: 6px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.create-comment-btn:hover {
+  background-color: #3a80d2;
+}
+
+.create-comment-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.comment-content-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.comment-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-comment-btn {
+  padding: 6px 12px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.save-comment-btn:hover {
+  background-color: #4cae4c;
+}
+
+.comment-list {
+  margin-top: 20px;
+}
+
+.no-comments {
+  color: var(--secondary-color);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.comment-item {
+  background-color: white;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--dark-color);
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: var(--secondary-color);
+}
+
+.delete-comment-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--danger-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--danger-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.delete-comment-btn:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.comment-content {
+  color: var(--text-color);
+  font-size: 14px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.mention {
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.reply-btn {
+  padding: 4px 8px;
+  border: none;
+  background-color: transparent;
+  color: var(--primary-color);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out;
+}
+
+.reply-btn:hover {
+  text-decoration: underline;
+}
+
+.create-reply-form {
+  margin-top: 10px;
+  margin-left: 40px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.reply-content-textarea {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.reply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.save-reply-btn {
+  padding: 4px 8px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.save-reply-btn:hover {
+  background-color: #3a80d2;
+}
+
+.cancel-reply-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease-in-out;
+}
+
+.cancel-reply-btn:hover {
+  background-color: var(--light-color);
+}
+
+.replies-list {
+  margin-top: 15px;
+  margin-left: 40px;
+  border-left: 2px solid var(--border-color);
+  padding-left: 15px;
+}
+
+.reply-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+/* 通知组件样式 */
+.notification-container {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  font-size: 24px;
+  padding: 8px;
+  color: var(--dark-color);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--danger-color);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+  border: 1px solid var(--border-color);
+}
+
+.notification-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notification-panel-header h3 {
+  margin: 0;
+  color: var(--dark-color);
+  font-size: 16px;
+}
+
+.mark-all-read-btn {
+  background-color: transparent;
+  border: none;
+  color: var(--primary-color);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease-in-out;
+}
+
+.mark-all-read-btn:hover {
+  text-decoration: underline;
+  color: #3a80d2;
+}
+
+.notification-list {
+  padding: 0;
+}
+
+.no-notifications {
+  text-align: center;
+  padding: 20px;
+  color: var(--secondary-color);
+  font-style: italic;
+}
+
+.notification-item {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  display: flex;
+  gap: 12px;
+}
+
+.notification-item:hover {
+  background-color: var(--light-color);
+}
+
+.notification-item.read {
+  background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+  background-color: white;
+  border-left: 3px solid var(--primary-color);
+}
+
+.notification-type {
+  font-size: 20px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-weight: 500;
+  color: var(--dark-color);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.notification-text {
+  color: var(--text-color);
+  font-size: 13px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 11px;
+  color: var(--secondary-color);
+}

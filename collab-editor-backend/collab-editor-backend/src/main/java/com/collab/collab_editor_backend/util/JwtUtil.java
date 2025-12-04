@@ -65,9 +65,15 @@ public class JwtUtil {
                 .getBody();
     }
 
-    // 解析用户ID（保持不变）
+    // 解析用户ID，添加对null和空字符串的处理
     public Long getUserIdFromToken(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.isEmpty()) {
+            throw new RuntimeException("Authorization header is missing");
+        }
         String token = authorizationHeader.replace("Bearer ", "").trim();
+        if (token.isEmpty()) {
+            throw new RuntimeException("Token is missing");
+        }
         Claims claims = parseToken(token);
         return claims.get("userId", Long.class);
     }

@@ -1,6 +1,7 @@
 package com.collab.collab_editor_backend.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -13,7 +14,10 @@ public class Document {
     private Long id;
     private String title; // 文档标题
     private Long ownerId; // 所有者ID
-    private String content; // MinIO 存储路径
+    @TableField("content") // 明确指定数据库字段名
+    private String content; // 文档内容
+    @TableField("minio_key") // 明确指定数据库字段名
+    private String minioKey; // MinIO 存储路径（对应数据库的minio_key字段）
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

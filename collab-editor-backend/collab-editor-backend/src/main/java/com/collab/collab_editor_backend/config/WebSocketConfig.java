@@ -1,10 +1,10 @@
 package com.collab.collab_editor_backend.config; // 这行是自动生成的，若不一致需手动修改
 
+import com.collab.collab_editor_backend.handler.DocumentWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 /**
  * WebSocket 基础配置类：仅启用功能，暂不写复杂业务
@@ -17,9 +17,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // 1. 配置协作文档的 WebSocket 路径：/ws/collab/{docId}（按文档ID区分不同协作会话）
-        // 2. 暂时用 TextWebSocketHandler() 空实现（避免无业务逻辑时报错）
-        // 3. setAllowedOrigins：允许前端 Vue 项目（默认端口 5173）跨域连接
-        registry.addHandler(new TextWebSocketHandler(), "/ws/collab/{docId}")
+        // 2. 使用自定义的 DocumentWebSocketHandler 处理协作逻辑
+        // 3. setAllowedOrigins：允许前端 React 项目（默认端口 5173）跨域连接
+        registry.addHandler(new DocumentWebSocketHandler(), "/ws/collab/{docId}")
                 .setAllowedOrigins("http://localhost:5173");
     }
 }
