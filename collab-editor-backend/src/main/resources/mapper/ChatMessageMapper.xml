@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.collab.collab_editor_backend.mapper.ChatMessageMapper">
+
+    <!-- 获取两个用户之间的聊天记录 -->
+    <select id="getChatHistory" resultType="com.collab.collab_editor_backend.entity.ChatMessage">
+        SELECT id, sender_id as senderId, receiver_id as receiverId, content, send_time as sendTime, is_read as isRead
+        FROM t_chat_message
+        WHERE (sender_id = #{userId1} AND receiver_id = #{userId2})
+           OR (sender_id = #{userId2} AND receiver_id = #{userId1})
+        ORDER BY send_time ASC
+    </select>
+
+    <!-- 更新消息为已读 -->
+    <update id="markMessagesAsRead">
+        UPDATE t_chat_message
+        SET is_read = 1
+        WHERE sender_id = #{senderId} AND receiver_id = #{receiverId} AND is_read = 0
+    </update>
+
+    <!-- 获取用户的未读消息数量 -->
+    <select id="getUnreadCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM t_chat_message
+        WHERE receiver_id = #{userId} AND is_read = 0
+    </select>
+
+</mapper>

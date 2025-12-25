@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.collab.collab_editor_backend.mapper.DocumentMapper">
+
+    <!-- 适配你的实体类：正确映射数据库字段到实体类字段 -->
+    <select id="selectByOwnerId" resultType="com.collab.collab_editor_backend.entity.Document">
+        SELECT
+        id,
+        title,
+        owner_id AS ownerId,  -- 数据库owner_id → 实体类ownerId
+        content AS content, -- 数据库content → 实体类content
+        minio_key AS minioKey, -- 数据库minio_key → 实体类minioKey
+        category AS category,
+        tags AS tags,
+        create_time AS createTime,
+        update_time AS updateTime
+        FROM t_document
+        WHERE owner_id = #{ownerId}
+        ORDER BY update_time DESC
+    </select>
+
+</mapper>

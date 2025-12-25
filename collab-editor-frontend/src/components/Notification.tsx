@@ -1,4 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Badge,
+  IconButton,
+  Popover,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemButton,
+  Typography,
+  Box,
+  Button,
+  Divider,
+  Avatar,
+  Tooltip
+} from '@mui/material';
+import {
+  Notifications as NotificationsIcon,
+  Assignment as AssignmentIcon,
+  ChatBubble as ChatBubbleIcon,
+  DoneAll as DoneAllIcon
+} from '@mui/icons-material';
 
 // 通知接口定义
 interface NotificationItem {
@@ -16,8 +38,8 @@ interface NotificationProps {
 
 const Notification: React.FC<NotificationProps> = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   // 模拟获取通知数据
   const fetchNotifications = async () => {
@@ -45,10 +67,23 @@ const Notification: React.FC<NotificationProps> = () => {
     setUnreadCount(mockNotifications.filter(n => !n.isRead).length);
   };
 
+  // 打开通知面板
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // 关闭通知面板
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+
   // 标记通知为已读
   const markAsRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(notification => 
+    setNotifications(prev =>
+      prev.map(notification =>
         notification.id === id ? { ...notification, isRead: true } : notification
       )
     );
@@ -57,7 +92,7 @@ const Notification: React.FC<NotificationProps> = () => {
 
   // 标记所有通知为已读
   const markAllAsRead = () => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(notification => ({ ...notification, isRead: true }))
     );
     setUnreadCount(0);
@@ -78,57 +113,126 @@ const Notification: React.FC<NotificationProps> = () => {
   }, []);
 
   return (
-    <div className="notification-container">
-      {/* 通知按钮 */}
-      <button 
-        className="notification-btn"
-        onClick={() => setShowNotifications(!showNotifications)}
-      >
-        <span className="notification-icon">🔔</span>
-        {unreadCount > 0 && (
-          <span className="notification-badge">{unreadCount}</span>
-        )}
-      </button>
+    <>
+      <Tooltip title="通知">
+        <IconButton onClick={handleClick} color="inherit">
+          <Badge badgeContent={unreadCount} color="error">
+            <NotificationsIcon />
+          </Badge>
+        </IconButton>
+      </Tooltip>
 
-      {/* 通知面板 */}
-      {showNotifications && (
-        <div className="notification-panel">
-          <div className="notification-panel-header">
-            <h3>通知</h3>
-            {unreadCount > 0 && (
-              <button 
-                className="mark-all-read-btn"
-                onClick={markAllAsRead}
-              >
-                全部已读
-              </button>
-            )}
-          </div>
-          <div className="notification-list">
-            {notifications.length === 0 ? (
-              <p className="no-notifications">暂无通知</p>
-            ) : (
-              notifications.map(notification => (
-                <div 
-                  key={notification.id} 
-                  className={`notification-item ${notification.isRead ? 'read' : 'unread'}`}
-                  onClick={() => markAsRead(notification.id)}
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: { width: 360, maxHeight: 500 }
+        }}
+      >
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" component="div">
+            通知
+          </Typography>
+          {unreadCount > 0 && (
+            <Button
+              size="small"
+              startIcon={<DoneAllIcon />}
+              onClick={markAllAsRead}
+            >
+              全部已读
+            </Button>
+          )}
+        </Box>
+        <Divider />
+
+        {notifications.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              暂无通知
+            </Typography>
+          </Box>
+        ) : (
+          <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
+            {notifications.map((notification, index) => (
+              <React.Fragment key={notification.id}>
+                {index > 0 && <Divider component="li" />}
+                <ListItem
+                  alignItems="flex-start"
+                  disablePadding
                 >
-                  <div className="notification-type">
-                    {notification.type === 'mention' ? '💬' : '📋'}
-                  </div>
-                  <div className="notification-content">
-                    <div className="notification-title">{notification.title}</div>
-                    <div className="notification-text">{notification.content}</div>
-                    <div className="notification-time">{formatTime(notification.createTime)}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+                  <ListItemButton
+                    onClick={() => markAsRead(notification.id)}
+                    sx={{
+                      bgcolor: notification.isRead ? 'transparent' : 'action.hover',
+                      '&:hover': { bgcolor: 'action.selected' }
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: notification.type === 'mention' ? 'primary.main' : 'secondary.main' }}>
+                        {notification.type === 'mention' ? <ChatBubbleIcon /> : <AssignmentIcon />}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="subtitle2" component="span">
+                            {notification.title}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" component="span">
+                            {formatTime(notification.createTime).split(' ')[1]}
+                          </Typography>
+                        </Box>
+                      }
+                      secondary={
+                        <React.Fragment>
+                          <Typography
+                            sx={{ display: 'inline' }}
+                            component="span"
+                            variant="body2"
+                            color="text.primary"
+                          >
+                            {notification.content}
+                          </Typography>
+                          <br />
+                          <Typography variant="caption" color="text.secondary">
+                            {formatTime(notification.createTime).split(' ')[0]}
+                          </Typography>
+                        </React.Fragment>
+                      }
+                    />
+                  </ListItemButton>
+                  {!notification.isRead && (
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        bgcolor: 'primary.main',
+                        position: 'absolute',
+                        right: 16,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  )}
+                </ListItem>
+              </React.Fragment>
+            ))}
+          </List>
+        )}
+      </Popover>
+    </>
   );
 };
 

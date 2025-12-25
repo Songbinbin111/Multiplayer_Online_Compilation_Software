@@ -1,5 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { permissionApi, userApi } from '../api';
+import {
+  Box,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Paper,
+  Chip
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 // 定义权限类型
 interface DocPermission {
@@ -35,15 +53,23 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
   const fetchPermissions = async () => {
     try {
       const response = await permissionApi.getPermissionsByDocId(docId);
-      const data = response.data;
+      let data = response.data || [];
+      // 确保data是数组类型
+      if (!Array.isArray(data)) {
+        data = [];
+      }
       setPermissions(data);
       // 检查当前用户是否是文档所有者
       const userPermission = data.find((p: DocPermission) => p.userId === currentUserId);
       if (userPermission && userPermission.permissionType === 1) {
         setIsOwner(true);
+      } else {
+        setIsOwner(false);
       }
     } catch (error) {
       console.error('获取权限列表失败:', error);
+      setPermissions([]);
+      setIsOwner(false);
     }
   };
 
@@ -51,10 +77,11 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
   const fetchAllUsers = async () => {
     try {
       const response = await userApi.getList();
-      const data = response.data;
+      const data = response.data || [];
       setAllUsers(data);
     } catch (error) {
       console.error('获取用户列表失败:', error);
+      setAllUsers([]);
     }
   };
 
@@ -122,88 +149,108 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
   }, [docId]);
 
   return (
-    <div className="permission-panel">
-      <div className="permission-panel-header">
-        <h3>文档权限</h3>
-      </div>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Typography variant="h6">文档权限</Typography>
+      </Box>
 
       {/* 分配权限表单 */}
       {isOwner && (
-        <div className="assign-permission-form">
-          <h4>分配权限</h4>
-          <select
-            value={selectedUser || ''}
-            onChange={(e) => setSelectedUser(parseInt(e.target.value))}
-            className="user-select"
-          >
-            <option value="">选择用户</option>
-            {allUsers.map(user => (
-              <option key={user.id} value={user.id} disabled={hasPermission(user.id)}>
-                {user.username}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedPermission}
-            onChange={(e) => setSelectedPermission(parseInt(e.target.value))}
-            className="permission-select"
-          >
-            <option value={0}>查看权限</option>
-            <option value={1}>编辑权限</option>
-          </select>
-          <button
-            onClick={handleAssignPermission}
-            className="assign-btn"
-            disabled={!selectedUser}
-          >
-            分配权限
-          </button>
-        </div>
+        <Paper sx={{ p: 2, m: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>分配权限</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>选择用户</InputLabel>
+              <Select
+                value={selectedUser || ''}
+                label="选择用户"
+                onChange={(e) => setSelectedUser(Number(e.target.value))}
+              >
+                {allUsers.map(user => (
+                  <MenuItem key={user.id} value={user.id} disabled={hasPermission(user.id)}>
+                    {user.username}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth size="small">
+              <InputLabel>权限类型</InputLabel>
+              <Select
+                value={selectedPermission}
+                label="权限类型"
+                onChange={(e) => setSelectedPermission(Number(e.target.value))}
+              >
+                <MenuItem value={0}>查看权限</MenuItem>
+                <MenuItem value={1}>编辑权限</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddIcon />}
+              onClick={handleAssignPermission}
+              disabled={!selectedUser}
+              fullWidth
+            >
+              分配权限
+            </Button>
+          </Box>
+        </Paper>
       )}
 
       {/* 权限列表 */}
-      <div className="permission-list">
-        <h4>权限列表</h4>
+      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        <Typography variant="subtitle2" sx={{ px: 2, pt: 2, pb: 1, color: 'text.secondary' }}>
+          已授权用户
+        </Typography>
         {permissions.length === 0 ? (
-          <p className="no-permissions">暂无权限设置</p>
+          <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+            <Typography variant="body2">暂无权限设置</Typography>
+          </Box>
         ) : (
-          permissions.map(permission => (
-            <div key={permission.id} className="permission-item">
-              <div className="permission-user">
-                <span className="username">{getUsername(permission.userId)}</span>
-                {permission.userId === currentUserId && (
-                  <span className="current-user-tag">（我）</span>
-                )}
-              </div>
-              <div className="permission-type">
-                {isOwner && permission.userId !== currentUserId ? (
-                  <select
-                    value={permission.permissionType}
-                    onChange={(e) => handleUpdatePermission(permission.userId, parseInt(e.target.value))}
-                    className="permission-select"
-                  >
-                    <option value={0}>查看</option>
-                    <option value={1}>编辑</option>
-                  </select>
-                ) : (
-                  <span>{getPermissionText(permission.permissionType)}</span>
-                )}
-              </div>
-              <div className="permission-actions">
+          <List>
+            {permissions.map(permission => (
+              <ListItem key={permission.id} divider>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography variant="body1">{getUsername(permission.userId)}</Typography>
+                      {permission.userId === currentUserId && (
+                        <Chip label="我" size="small" color="primary" sx={{ ml: 1, height: 20 }} />
+                      )}
+                    </Box>
+                  }
+                  secondary={
+                    isOwner && permission.userId !== currentUserId ? (
+                      <FormControl variant="standard" size="small" sx={{ mt: 1, minWidth: 80 }}>
+                        <Select
+                          value={permission.permissionType}
+                          onChange={(e) => handleUpdatePermission(permission.userId, Number(e.target.value))}
+                          disableUnderline
+                        >
+                          <MenuItem value={0}>查看</MenuItem>
+                          <MenuItem value={1}>编辑</MenuItem>
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        {getPermissionText(permission.permissionType)}
+                      </Typography>
+                    )
+                  }
+                />
                 {isOwner && permission.userId !== currentUserId && (
-                  <button
-                    onClick={() => handleRemovePermission(permission.userId)}
-                    className="remove-permission-btn"
-                  >
-                    移除
-                  </button>
+                  <ListItemSecondaryAction>
+                    <IconButton edge="end" aria-label="delete" onClick={() => handleRemovePermission(permission.userId)}>
+                      <DeleteIcon color="error" />
+                    </IconButton>
+                  </ListItemSecondaryAction>
                 )}
-              </div>
-            </div>
-          ))
+              </ListItem>
+            ))}
+          </List>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

@@ -1,5 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { versionApi } from '../api/documentApi';
+import { versionApi, documentApi } from '../api/documentApi';
+import { permissionApi } from '../api/permissionApi';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  CircularProgress,
+  Alert,
+  Paper,
+  Stack,
+  Tooltip
+} from '@mui/material';
+import {
+  Close as CloseIcon,
+  Visibility as VisibilityIcon,
+  Restore as RestoreIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
+  CompareArrows as CompareArrowsIcon,
+  DeleteOutline as ClearIcon
+} from '@mui/icons-material';
 
 // 版本信息接口
 interface Version {
@@ -10,6 +43,18 @@ interface Version {
   description?: string;
   createTime: string;
   createBy: number;
+  isLocked?: boolean;
+}
+
+// 版本差异结果接口
+interface DiffResult {
+  version1: Version;
+  version2: Version;
+  diffRows: Array<{
+    oldLine: string;
+    newLine: string;
+    tag: string;
+  }>;
 }
 
 interface VersionControlProps {
@@ -22,6 +67,13 @@ const VersionControl: React.FC<VersionControlProps> = ({ docId, onVersionSelect,
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // 版本比较相关状态
+  const [selectedVersion1, setSelectedVersion1] = useState<number | ''>('');
+  const [selectedVersion2, setSelectedVersion2] = useState<number | ''>('');
+  const [diffResult, setDiffResult] = useState<DiffResult | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [diffError, setDiffError] = useState('');
+  const [autoCreateTried, setAutoCreateTried] = useState(false);
 
   // 获取版本列表
   const fetchVersions = async () => {
@@ -29,11 +81,12 @@ const VersionControl: React.FC<VersionControlProps> = ({ docId, onVersionSelect,
     setError('');
     try {
       const response = await versionApi.getVersions(docId);
-      const responseData = response.data || response;
-      if (responseData && Array.isArray(responseData)) {
-        setVersions(responseData);
+      const result = response.data;
+      if (result?.code === 200) {
+        const list = Array.isArray(result.data) ? result.data : [];
+        setVersions(list);
       } else {
-        setError('获取版本列表失败');
+        setError(result?.message || '获取版本列表失败');
       }
     } catch (err) {
       setError('网络错误，获取版本列表失败');
@@ -59,15 +112,58 @@ const VersionControl: React.FC<VersionControlProps> = ({ docId, onVersionSelect,
   const handleViewVersion = async (versionId: number) => {
     try {
       const response = await versionApi.getVersion(versionId);
-      const responseData = response.data || response;
-      if (responseData) {
-        onVersionSelect(responseData);
+      const result = response.data;
+      if (result?.code === 200 && result.data) {
+        onVersionSelect(result.data);
       } else {
-        alert('获取版本内容失败');
+        alert(result?.message || '获取版本内容失败');
       }
     } catch (err) {
       alert('网络错误，获取版本内容失败');
       console.error('获取版本内容失败:', err);
+    }
+  };
+
+  // 获取版本差异
+  const handleGetDiff = async () => {
+    if (!selectedVersion1 || !selectedVersion2) {
+      alert('请选择两个版本进行比较');
+      return;
+    }
+
+    setDiffLoading(true);
+    setDiffError('');
+    try {
+      const response = await versionApi.getVersionDiff(Number(selectedVersion1), Number(selectedVersion2));
+      const result = response.data;
+      if (result?.code === 200 && result.data) {
+        setDiffResult(result.data);
+      } else {
+        setDiffError(result?.message || '获取版本差异失败');
+      }
+    } catch (err) {
+      setDiffError('网络错误，获取版本差异失败');
+      console.error('获取版本差异失败:', err);
+    } finally {
+      setDiffLoading(false);
+    }
+  };
+
+  // 清除差异结果
+  const handleClearDiff = () => {
+    setDiffResult(null);
+    setSelectedVersion1('');
+    setSelectedVersion2('');
+  };
+
+  // 锁定/解锁版本
+  const handleLockVersion = async (versionId: number, currentLocked: boolean) => {
+    try {
+      await versionApi.lockVersion(versionId, !currentLocked);
+      fetchVersions(); // 刷新版本列表
+    } catch (err: any) {
+      alert(`操作失败: ${err.response?.data?.message || '网络错误'}`);
+      console.error('版本锁定失败:', err);
     }
   };
 
@@ -76,205 +172,281 @@ const VersionControl: React.FC<VersionControlProps> = ({ docId, onVersionSelect,
     fetchVersions();
   }, [docId]);
 
+  // 开发环境下，空列表且具备编辑权限时自动创建初始版本
+  useEffect(() => {
+    const run = async () => {
+      if (import.meta.env.DEV && !loading && versions.length === 0 && !autoCreateTried) {
+        setAutoCreateTried(true);
+        try {
+          const perm = await permissionApi.checkEditPermission(docId);
+          const ok = perm?.data?.data === true;
+          if (!ok) return;
+          const contentResp = await documentApi.getContent(docId);
+          const contentData = contentResp?.data?.data ?? '';
+          const name = `初始版本`;
+          const desc = `由版本面板自动创建`;
+          const createResp = await versionApi.createVersion(docId, String(contentData || ''), name, desc);
+          if (createResp?.data?.code === 200) {
+            fetchVersions();
+          }
+        } catch { }
+      }
+    };
+    run();
+  }, [docId, loading, versions.length, autoCreateTried]);
+
   return (
-    <div className="version-control-container">
-      <div className="version-control-header">
-        <h3>文档版本历史</h3>
-        <button className="close-btn" onClick={onClose}>×</button>
-      </div>
+    <Dialog
+      open={true}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { minHeight: '60vh', maxHeight: '80vh' }
+      }}
+    >
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="span">文档版本历史</Typography>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-      <div className="version-control-content">
-        {loading ? (
-          <div className="loading">加载版本列表中...</div>
-        ) : error ? (
-          <div className="error">{error}</div>
-        ) : versions.length === 0 ? (
-          <div className="empty">暂无版本记录</div>
-        ) : (
-          <ul className="version-list">
-            {versions.map((version) => (
-              <li key={version.id} className="version-item">
-                <div className="version-info">
-                  <div className="version-name">
-                    {version.versionName || `版本 ${version.id}`}
-                  </div>
-                  <div className="version-meta">
-                    <span className="create-time">
-                      创建时间: {new Date(version.createTime).toLocaleString()}
-                    </span>
-                    <span className="create-by">
-                      创建人: {version.createBy}
-                    </span>
-                  </div>
-                  {version.description && (
-                    <div className="version-description">
-                      {version.description}
-                    </div>
-                  )}
-                </div>
-                <div className="version-actions">
-                  <button
-                    className="view-btn"
-                    onClick={() => handleViewVersion(version.id)}
-                  >
-                    查看
-                  </button>
-                  <button
-                    className="rollback-btn"
-                    onClick={() => handleRollback(version.id)}
-                  >
-                    回滚
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+      <DialogContent dividers>
+        {(!loading && versions.length === 0) && (
+          <Box sx={{ mb: 2 }}>
+            <Alert severity="info" sx={{ mb: 1 }}>暂无版本记录</Alert>
+            <Button
+              variant="contained"
+              onClick={async () => {
+                try {
+                  const contentResp = await documentApi.getContent(docId);
+                  const contentData = contentResp?.data?.data ?? '';
+                  const name = `初始版本`;
+                  const desc = `由版本面板创建`;
+                  const createResp = await versionApi.createVersion(docId, String(contentData || ''), name, desc);
+                  const result = createResp?.data;
+                  if (result?.code === 200) {
+                    fetchVersions();
+                  } else {
+                    alert(result?.message || '创建版本失败');
+                  }
+                } catch (e) {
+                  alert('创建版本失败，请稍后重试');
+                }
+              }}
+              size="small"
+            >
+              创建首个版本
+            </Button>
+          </Box>
         )}
-      </div>
+        {/* 版本比较区域 */}
+        <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'background.default' }}>
+          <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+            <CompareArrowsIcon sx={{ mr: 1 }} /> 版本比较
+          </Typography>
 
-      <style>{`
-        .version-control-container {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-          width: 80%;
-          max-width: 800px;
-          max-height: 80vh;
-          z-index: 1000;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .version-control-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 24px;
-          border-bottom: 1px solid #e0e0e0;
-        }
-        
-        .version-control-header h3 {
-          margin: 0;
-          font-size: 18px;
-          color: #333;
-        }
-        
-        .close-btn {
-          background: none;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          color: #666;
-          padding: 0;
-          width: 30px;
-          height: 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 4px;
-          transition: background-color 0.2s;
-        }
-        
-        .close-btn:hover {
-          background-color: #f5f5f5;
-        }
-        
-        .version-control-content {
-          padding: 20px;
-          overflow-y: auto;
-          flex: 1;
-        }
-        
-        .loading, .error, .empty {
-          text-align: center;
-          padding: 40px 0;
-          color: #666;
-        }
-        
-        .version-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-        
-        .version-item {
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          margin-bottom: 12px;
-          padding: 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          transition: box-shadow 0.2s;
-        }
-        
-        .version-item:hover {
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        
-        .version-info {
-          flex: 1;
-        }
-        
-        .version-name {
-          font-weight: 600;
-          color: #333;
-          margin-bottom: 8px;
-        }
-        
-        .version-meta {
-          font-size: 14px;
-          color: #666;
-          margin-bottom: 8px;
-          display: flex;
-          gap: 16px;
-        }
-        
-        .version-description {
-          font-size: 14px;
-          color: #888;
-          margin-top: 8px;
-          line-height: 1.4;
-        }
-        
-        .version-actions {
-          display: flex;
-          gap: 8px;
-          flex-shrink: 0;
-        }
-        
-        .view-btn, .rollback-btn {
-          padding: 6px 12px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          transition: background-color 0.2s;
-        }
-        
-        .view-btn {
-          background-color: #e3f2fd;
-          color: #1976d2;
-        }
-        
-        .view-btn:hover {
-          background-color: #bbdefb;
-        }
-        
-        .rollback-btn {
-          background-color: #fff3e0;
-          color: #f57c00;
-        }
-        
-        .rollback-btn:hover {
-          background-color: #ffe0b2;
-        }
-      `}</style>
-    </div>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 2 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>版本 1</InputLabel>
+              <Select
+                value={selectedVersion1}
+                label="版本 1"
+                onChange={(e) => setSelectedVersion1(e.target.value as number)}
+              >
+                <MenuItem value=""><em>选择版本</em></MenuItem>
+                {versions.map((version) => (
+                  <MenuItem key={version.id} value={version.id}>
+                    {version.versionName || `版本 ${version.id}`} - {new Date(version.createTime).toLocaleDateString()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Typography variant="body2" color="text.secondary">对比</Typography>
+
+            <FormControl size="small" fullWidth>
+              <InputLabel>版本 2</InputLabel>
+              <Select
+                value={selectedVersion2}
+                label="版本 2"
+                onChange={(e) => setSelectedVersion2(e.target.value as number)}
+              >
+                <MenuItem value=""><em>选择版本</em></MenuItem>
+                {versions.map((version) => (
+                  <MenuItem key={version.id} value={version.id}>
+                    {version.versionName || `版本 ${version.id}`} - {new Date(version.createTime).toLocaleDateString()}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="contained"
+                onClick={handleGetDiff}
+                disabled={!selectedVersion1 || !selectedVersion2 || selectedVersion1 === selectedVersion2}
+                size="small"
+              >
+                比较
+              </Button>
+
+              {diffResult && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleClearDiff}
+                  size="small"
+                  startIcon={<ClearIcon />}
+                >
+                  清除
+                </Button>
+              )}
+            </Box>
+          </Stack>
+
+          {/* 差异结果显示 */}
+          {diffResult && (
+            <Box sx={{ mt: 2, borderTop: 1, borderColor: 'divider', pt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                差异结果: {diffResult.version1.versionName || `版本 ${diffResult.version1.id}`} → {diffResult.version2.versionName || `版本 ${diffResult.version2.id}`}
+              </Typography>
+
+              {diffLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : diffError ? (
+                <Alert severity="error">{diffError}</Alert>
+              ) : (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    maxHeight: '300px',
+                    overflow: 'auto',
+                    bgcolor: 'grey.50',
+                    p: 1.5,
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {diffResult.diffRows.map((row, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        mb: 0.5,
+                        p: 0.5,
+                        borderRadius: 0.5,
+                        bgcolor: row.oldLine !== row.newLine ? 'warning.light' : 'transparent',
+                        opacity: row.oldLine !== row.newLine ? 0.8 : 1
+                      }}
+                    >
+                      {row.oldLine || row.newLine}
+                    </Box>
+                  ))}
+                </Paper>
+              )}
+            </Box>
+          )}
+        </Paper>
+
+        <Typography variant="subtitle1" gutterBottom>历史版本列表</Typography>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : versions.length === 0 ? (
+          <Alert severity="info">暂无版本记录</Alert>
+        ) : (
+          <List>
+            {versions.map((version) => (
+              <React.Fragment key={version.id}>
+                <ListItem
+                  alignItems="flex-start"
+                  sx={{
+                    bgcolor: version.isLocked ? 'warning.light' : 'inherit',
+                    opacity: version.isLocked ? 0.9 : 1,
+                    borderRadius: 1,
+                    mb: 1,
+                    border: 1,
+                    borderColor: 'divider'
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2">
+                          {version.versionName || `版本 ${version.id}`}
+                        </Typography>
+                        {version.isLocked && <LockIcon fontSize="small" color="action" />}
+                      </Box>
+                    }
+                    secondary={
+                      <React.Fragment>
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          创建时间: {new Date(version.createTime).toLocaleString()} | 创建人: {version.createBy}
+                        </Typography>
+                        {version.description && (
+                          <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                            {version.description}
+                          </Typography>
+                        )}
+                      </React.Fragment>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <Stack direction="row" spacing={1}>
+                      <Tooltip title="查看内容">
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() => handleViewVersion(version.id)}
+                          color="primary"
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title={version.isLocked ? "版本已锁定，无法回滚" : "回滚到此版本"}>
+                        <span>
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            onClick={() => handleRollback(version.id)}
+                            color="warning"
+                            disabled={!!version.isLocked}
+                          >
+                            <RestoreIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+
+                      <Tooltip title={version.isLocked ? "解锁版本" : "锁定版本"}>
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() => handleLockVersion(version.id, !!version.isLocked)}
+                          color="default"
+                        >
+                          {version.isLocked ? <LockOpenIcon /> : <LockIcon />}
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </React.Fragment>
+            ))}
+          </List>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>关闭</Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

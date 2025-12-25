@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.collab.collab_editor_backend.mapper.DocPermissionMapper">
+
+    <!-- 根据文档ID获取所有权限记录 -->
+    <select id="getPermissionsByDocId" resultType="com.collab.collab_editor_backend.entity.DocPermission">
+        SELECT id, doc_id as docId, user_id as userId, permission_type as permissionType, create_time as createTime
+        FROM t_doc_permission
+        WHERE doc_id = #{docId}
+    </select>
+
+    <!-- 根据用户ID获取所有有权限的文档ID列表 -->
+    <select id="getDocIdsByUserId" resultType="java.lang.Long">
+        SELECT doc_id as docId
+        FROM t_doc_permission
+        WHERE user_id = #{userId}
+        <if test="permissionType != null">
+            AND permission_type = #{permissionType}
+        </if>
+    </select>
+
+    <!-- 获取用户在指定文档的权限 -->
+    <select id="getPermissionByDocIdAndUserId" resultType="com.collab.collab_editor_backend.entity.DocPermission">
+        SELECT id, doc_id as docId, user_id as userId, permission_type as permissionType, create_time as createTime
+        FROM t_doc_permission
+        WHERE doc_id = #{docId} AND user_id = #{userId}
+    </select>
+
+</mapper>
