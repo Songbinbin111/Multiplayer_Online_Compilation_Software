@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { taskApi } from '../api';
+import { taskApi, userApi } from '../api';
 import {
   Box,
   Typography,
@@ -11,14 +11,11 @@ import {
   Select,
   MenuItem,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Stack,
-  IconButton
+  IconButton,
+  Paper
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -59,6 +56,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
     assigneeId: currentUserId,
     deadline: ''
   });
+  const [availableUsers, setAvailableUsers] = useState<User[]>(onlineUsers || []);
 
   // 获取文档的所有任务
   const fetchTasks = async () => {
@@ -125,16 +123,25 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
   // 更新任务状态
   const handleUpdateStatus = async (taskId: number, newStatus: number) => {
     try {
+      console.log(`正在更新任务 ${taskId} 状态为 ${newStatus}`);
       // 获取当前任务以获取现有的截止日期
       const task = tasks.find(t => t.id === taskId);
-      await taskApi.updateStatus({
+      const response = await taskApi.updateStatus({
         taskId,
         status: newStatus,
         deadline: task?.deadline
       });
-      fetchTasks(); // 刷新任务列表
-    } catch (error) {
+
+      if (response.data && response.data.code === 200) {
+        console.log('任务状态更新成功');
+        fetchTasks(); // 刷新任务列表
+      } else {
+        console.error('更新任务状态失败:', response.data.message);
+        alert('更新状态失败: ' + (response.data.message || '未知错误'));
+      }
+    } catch (error: any) {
       console.error('更新任务状态失败:', error);
+      alert('更新状态失败: ' + (error.response?.data?.message || '网络错误'));
     }
   };
 
@@ -178,7 +185,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
 
   // 获取用户名
   const getUsername = (userId: number) => {
-    const user = onlineUsers.find(u => u.id === userId);
+    const user = availableUsers.find(u => u.id === userId) || onlineUsers.find(u => u.id === userId);
     return user ? user.username : '未知用户';
   };
 
@@ -186,6 +193,28 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
   useEffect(() => {
     fetchTasks();
   }, [docId]);
+
+  // 获取可选用户：优先合并在线用户与后端用户列表
+  useEffect(() => {
+    const mergeUsers = (listA: User[], listB: User[]) => {
+      const map = new Map<number, User>();
+      [...listA, ...listB].forEach(u => {
+        if (u && typeof u.id === 'number') {
+          map.set(u.id, u);
+        }
+      });
+      return Array.from(map.values());
+    };
+    (async () => {
+      try {
+        const res = await userApi.getList();
+        const serverUsers: User[] = (res && res.code === 200 && Array.isArray(res.data)) ? res.data : [];
+        setAvailableUsers(mergeUsers(onlineUsers || [], serverUsers || []));
+      } catch {
+        setAvailableUsers(onlineUsers || []);
+      }
+    })();
+  }, [onlineUsers]);
 
   // 使用useMemo缓存渲染的任务列表
   const renderedTasks = useMemo(() => {
@@ -266,22 +295,17 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
         {renderedTasks}
       </Box>
 
-      {/* 创建任务对话框 */}
-      <Dialog
-        open={showCreateForm}
-        onClose={() => setShowCreateForm(false)}
-        fullWidth
-        maxWidth="sm"
-        sx={{ zIndex: 1400 }} // 确保在最上层
-      >
-        <DialogTitle>创建新任务</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* 创建任务（改为内嵌表单，避免对话框焦点/层级问题） */}
+      {showCreateForm && (
+        <Paper sx={{ m: 2, p: 2, border: 1, borderColor: 'divider' }}>
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>创建新任务</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               label="任务标题"
               fullWidth
               value={newTask.title}
               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              inputProps={{ style: { fontWeight: 600 } }}
             />
             <TextField
               label="任务内容"
@@ -290,15 +314,34 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
               rows={3}
               value={newTask.content}
               onChange={(e) => setNewTask({ ...newTask, content: e.target.value })}
+              inputProps={{ style: { fontWeight: 500 } }}
             />
             <FormControl fullWidth>
-              <InputLabel>负责人</InputLabel>
+              <InputLabel id="assignee-label">负责人</InputLabel>
               <Select
+                id="assignee-select"
+                labelId="assignee-label"
                 value={newTask.assigneeId}
                 label="负责人"
                 onChange={(e) => setNewTask({ ...newTask, assigneeId: Number(e.target.value) })}
+                renderValue={(selected) => {
+                  const user = availableUsers.find(u => u.id === Number(selected));
+                  return user ? user.username : String(selected);
+                }}
+                onOpen={() => {
+                  if (!availableUsers || availableUsers.length === 0) {
+                    (async () => {
+                      try {
+                        const res = await userApi.getList();
+                        const serverUsers: User[] = Array.isArray(res.data) ? res.data : (res?.data || []);
+                        setAvailableUsers(serverUsers || []);
+                      } catch { }
+                    })();
+                  }
+                }}
+                MenuProps={{ disableScrollLock: true }}
               >
-                {onlineUsers.map(user => (
+                {availableUsers.map(user => (
                   <MenuItem key={user.id} value={user.id}>
                     {user.username}
                   </MenuItem>
@@ -314,12 +357,12 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ docId, onlineUsers, currentUserId
               onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
             />
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateForm(false)}>取消</Button>
-          <Button onClick={handleCreateTask} variant="contained">保存</Button>
-        </DialogActions>
-      </Dialog>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+            <Button onClick={() => setShowCreateForm(false)}>取消</Button>
+            <Button onClick={handleCreateTask} variant="contained">保存</Button>
+          </Box>
+        </Paper>
+      )}
     </Box>
   );
 };

@@ -53,10 +53,21 @@ export const useDocument = (docId: string | undefined, checkLogin: () => boolean
           setContent(String(contentData));
         }
       } else {
-        console.error('获取文档内容失败，API返回错误:', response);
+        const result = response?.data;
+        const msg = result?.message || '获取文档内容失败';
+        console.error('获取文档内容失败:', msg);
+        if (result?.code === 403) {
+          alert('无权查看此文档');
+        } else if (result?.code === 404) {
+          alert('文档不存在或已被删除');
+        } else {
+          alert(msg);
+        }
+        setContent('');
       }
     } catch (error) {
-      console.error('获取文档内容失败:', error);
+      const msg = (error as any)?.message || '获取文档内容失败';
+      console.error('获取文档内容失败:', msg);
     } finally {
       setLoading(false);
     }

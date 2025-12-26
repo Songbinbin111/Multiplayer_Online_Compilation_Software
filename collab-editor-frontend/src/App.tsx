@@ -15,11 +15,12 @@ const Editor = React.lazy(() => import('./components/Editor'));
 const Profile = React.lazy(() => import('./components/Profile'));
 const PasswordReset = React.lazy(() => import('./components/PasswordReset'));
 const CodePlayground = React.lazy(() => import('./components/CodePlayground'));
+const AdminPanel = React.lazy(() => import('./components/AdminPanel'));
 
 const App: React.FC = () => {
   // 使用localStorage模拟认证状态
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'user');
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'editor');
 
   // 深色模式已集成到主题中，无需单独切换函数
 
@@ -30,13 +31,13 @@ const App: React.FC = () => {
       const hasToken = !!localStorage.getItem('token');
       if (hasToken) {
         setIsAuthenticated(true);
-        setUserRole(localStorage.getItem('role') || 'user');
+        setUserRole(localStorage.getItem('role') || 'editor');
       }
     }
 
     const checkAuth = () => {
       setIsAuthenticated(!!localStorage.getItem('token'));
-      setUserRole(localStorage.getItem('role') || 'user');
+      setUserRole(localStorage.getItem('role') || 'editor');
     };
 
     // 监听localStorage变化
@@ -321,7 +322,7 @@ const App: React.FC = () => {
   }, [isAuthenticated]);
 
   // 检查用户是否有权限访问监控仪表板（临时允许所有人访问）
-  const canAccessMonitor = true;
+  // const canAccessMonitor = true;
 
   return (
     <Router>
@@ -329,18 +330,16 @@ const App: React.FC = () => {
         <CssBaseline />
         <Suspense fallback={<div className="loading">加载中...</div>}>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/" element={isAuthenticated ? <DocumentList /> : <Navigate to="/login" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password" element={<PasswordReset />} />
             <Route path="/documents" element={<DocumentList />} />
-            <Route path="/editor/:docId" element={<Editor />} />
+            <Route path="/editor/:docId" element={isAuthenticated ? <Editor /> : <Navigate to="/login" />} />
             <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
-            <Route path="/code" element={isAuthenticated ? <CodePlayground /> : <Navigate to="/login" />} />
-            <Route
-              path="/monitor"
-              element={canAccessMonitor ? <MonitorDashboard /> : <Navigate to="/documents" />}
-            />
+            <Route path="/playground" element={isAuthenticated ? <CodePlayground /> : <Navigate to="/login" />} />
+            <Route path="/monitor" element={isAuthenticated ? <MonitorDashboard /> : <Navigate to="/" />} />
+            <Route path="/admin" element={isAuthenticated ? <AdminPanel /> : <Navigate to="/" />} />
           </Routes>
         </Suspense>
       </ThemeProvider>

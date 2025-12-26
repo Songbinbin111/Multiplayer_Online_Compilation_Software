@@ -9,6 +9,7 @@ export interface CursorPosition {
   userId: number;
   username: string;
   position: number;
+  length: number;
 }
 
 /**
@@ -144,7 +145,8 @@ export const useCollaboration = (
                 return [...updated, {
                   userId: message.userId,
                   username: message.username,
-                  position: message.cursorPosition
+                  position: message.cursorPosition,
+                  length: typeof message.cursorLength === 'number' ? message.cursorLength : 0
                 }];
               });
             }
@@ -206,6 +208,7 @@ export const useCollaboration = (
               type: 'cursor_position',
               docId: parseInt(docId),
               cursorPosition: selection.index,
+              cursorLength: selection.length || 0,
               userId: parseInt(userIdStr),
               username: username
             }));

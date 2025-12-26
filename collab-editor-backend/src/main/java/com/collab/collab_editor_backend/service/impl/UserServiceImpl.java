@@ -407,6 +407,37 @@ public class UserServiceImpl implements UserService {
     }
     
     /**
+     * 删除用户实现
+     */
+    @Override
+    public Result<?> deleteUser(Long userId) {
+        // 验证用户是否存在
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 删除用户
+        int deleted = userMapper.deleteById(userId);
+        if (deleted > 0) {
+            // 记录操作日志
+            operationLogService.recordLog(
+                userId, // 操作用户ID
+                user.getUsername(), // 操作用户名
+                "delete_user", // 操作类型
+                "删除用户：用户ID " + userId + "，用户名 " + user.getUsername(), // 操作内容
+                "127.0.0.1",
+                "",
+                true,
+                null
+            );
+            return Result.successWithMessage("用户删除成功");
+        } else {
+            return Result.error("用户删除失败");
+        }
+    }
+
+    /**
      * 验证角色是否有效
      */
     private boolean isValidRole(String role) {

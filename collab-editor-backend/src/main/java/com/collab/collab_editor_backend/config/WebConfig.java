@@ -14,6 +14,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.collab.collab_editor_backend.config.JwtAuthInterceptor;
 import com.collab.collab_editor_backend.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
@@ -90,6 +91,9 @@ public class WebConfig implements WebMvcConfigurer {
         return filter;
     }
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     // 配置消息转换器，确保JSON响应使用UTF-8编码
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
@@ -97,7 +101,7 @@ public class WebConfig implements WebMvcConfigurer {
         converters.clear();
         
         // 创建Jackson消息转换器
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
         // 设置UTF-8编码
         converter.setDefaultCharset(StandardCharsets.UTF_8);
         converters.add(converter);

@@ -19,9 +19,12 @@ export const useAuth = () => {
 
     if (!token || !userId || !username) {
       localStorage.clear();
-      // 开发环境自动登录：避免本地预览阻塞
-      if (import.meta.env.DEV) {
-        const devUser = 'devuser';
+      const qs = new URLSearchParams(window.location.search);
+      const noAuto = qs.get('noAutoLogin') === '1';
+      const autoFlag = String(import.meta.env.VITE_AUTO_LOGIN || '').toLowerCase() === 'true';
+      if (import.meta.env.DEV && autoFlag && !noAuto) {
+        const port = window.location.port;
+        const devUser = port === '5174' ? 'devuser2' : 'devuser1';
         const devPass = 'password123';
         (async () => {
           try {

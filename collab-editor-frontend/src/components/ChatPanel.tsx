@@ -345,7 +345,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onClose }) => {
                         p: 1.5,
                         maxWidth: '80%',
                         bgcolor: isReceived ? 'grey.100' : 'primary.light',
-                        color: isReceived ? 'text.primary' : 'primary.contrastText',
+                        color: isReceived ? '#000000' : 'primary.contrastText',
                         borderRadius: 2,
                         borderTopLeftRadius: isReceived ? 0 : 2,
                         borderTopRightRadius: isReceived ? 2 : 0
@@ -375,10 +375,19 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onClose }) => {
                           textAlign: 'right',
                           mt: 0.5,
                           opacity: 0.8,
-                          fontSize: '0.7rem'
+                          fontSize: '0.7rem',
+                          color: isReceived ? 'rgba(0,0,0,0.6)' : 'inherit'
                         }}
                       >
-                        {new Date(message.sendTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {(() => {
+                          try {
+                            if (!message.sendTime) return '';
+                            const date = new Date(message.sendTime);
+                            return isNaN(date.getTime()) ? '' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          } catch (e) {
+                            return '';
+                          }
+                        })()}
                       </Typography>
                     </Paper>
                   </Box>

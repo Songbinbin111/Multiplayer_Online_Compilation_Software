@@ -60,7 +60,7 @@ public class UserActivityServiceImpl implements UserActivityService {
         
         // 封装结果
         Map<String, Object> data = new HashMap<>();
-        data.put("activities", activityPage.getRecords());
+        data.put("records", activityPage.getRecords());
         data.put("total", activityPage.getTotal());
         data.put("current", activityPage.getCurrent());
         data.put("size", activityPage.getSize());
@@ -111,10 +111,6 @@ public class UserActivityServiceImpl implements UserActivityService {
     @Override
     public Result<?> getRecentUserActivities(Long userId, Integer limit) {
         List<UserActivity> activities = userActivityMapper.getRecentActivities(userId, limit);
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("activities", activities);
-        
-        return Result.successWithMessage("获取用户最近行为记录成功", data);
+        return Result.successWithMessage("获取用户最近行为记录成功", activities);
     }
 }

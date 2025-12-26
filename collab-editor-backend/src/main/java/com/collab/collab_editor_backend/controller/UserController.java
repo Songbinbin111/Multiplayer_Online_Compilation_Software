@@ -252,10 +252,16 @@ public class UserController {
      * 获取用户列表接口（/api/user/list）- 旧版，兼容使用
      */
     @GetMapping("/api/user/list")
-    public Result getList() {
-        // 查询所有用户
+    public Result getList(HttpServletRequest request) {
+        Long currentUserId = (Long) request.getAttribute("userId");
+        if (currentUserId == null) {
+            return Result.error("未认证");
+        }
+        User currentUser = userMapper.selectById(currentUserId);
+        if (currentUser == null || !"admin".equals(currentUser.getRole())) {
+            return Result.error("权限不足");
+        }
         List<User> users = userMapper.selectList(null);
-        // 隐藏密码信息
         users.forEach(user -> user.setPassword(null));
         return Result.success(users);
     }
@@ -271,8 +277,16 @@ public class UserController {
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) String sortOrder) {
-        
+            @RequestParam(required = false) String sortOrder,
+            HttpServletRequest request) {
+        Long currentUserId = (Long) request.getAttribute("userId");
+        if (currentUserId == null) {
+            return Result.error("未认证");
+        }
+        User currentUser = userMapper.selectById(currentUserId);
+        if (currentUser == null || !"admin".equals(currentUser.getRole())) {
+            return Result.error("权限不足");
+        }
         // 构建筛选条件
         Map<String, Object> filters = new HashMap<>();
         if (username != null && !username.isEmpty()) {
@@ -403,5 +417,14 @@ public class UserController {
         logger.info("收到修改用户角色请求，用户ID: {}, 新角色: {}", userId, newRole);
         
         return userService.updateUserRole(userId, newRole);
+    }
+
+    /**
+     * 删除用户接口
+     */
+    @PostMapping("/api/user/delete")
+    public Result deleteUser(@RequestParam Long userId) {
+        logger.info("收到删除用户请求，用户ID: {}", userId);
+        return userService.deleteUser(userId);
     }
 }

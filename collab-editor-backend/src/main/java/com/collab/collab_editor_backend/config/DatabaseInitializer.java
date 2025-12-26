@@ -78,6 +78,32 @@ public class DatabaseInitializer implements CommandLineRunner {
             jdbcTemplate.execute(createErrorLogTable);
             logger.info("Table 'error_log' check/creation completed.");
             
+            // Create t_survey table if not exists
+            String createSurveyTable = "CREATE TABLE IF NOT EXISTS t_survey (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "user_id BIGINT, " +
+                    "score INT, " +
+                    "comment TEXT, " +
+                    "create_time DATETIME" +
+                    ")";
+            jdbcTemplate.execute(createSurveyTable);
+            logger.info("Table 't_survey' check/creation completed.");
+
+            // Create t_user_activity table if not exists
+            String createUserActivityTable = "CREATE TABLE IF NOT EXISTS t_user_activity (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "user_id BIGINT, " +
+                    "activity_type VARCHAR(50), " +
+                    "object_id BIGINT, " +
+                    "object_type VARCHAR(50), " +
+                    "details TEXT, " +
+                    "ip_address VARCHAR(50), " +
+                    "user_agent TEXT, " +
+                    "created_at DATETIME" +
+                    ")";
+            jdbcTemplate.execute(createUserActivityTable);
+            logger.info("Table 't_user_activity' check/creation completed.");
+            
         } catch (Exception e) {
             logger.error("Error initializing database tables: " + e.getMessage(), e);
         }

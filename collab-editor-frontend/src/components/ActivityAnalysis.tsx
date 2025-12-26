@@ -160,9 +160,13 @@ const ActivityAnalysis: React.FC = () => {
   };
 
   // 格式化日期
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
+  const formatDate = (dateString: string | any) => {
+    if (!dateString) return '-';
+    if (typeof dateString === 'string') {
+      const date = new Date(dateString.replace(' ', 'T'));
+      return date.toLocaleString();
+    }
+    return new Date(dateString).toLocaleString();
   };
 
   return (

@@ -66,13 +66,12 @@ public class DocumentWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         
-        // 共享模式下，所有用户都有权限访问
         // 检查用户是否有文档的查看权限
-        // if (!docPermissionService.hasViewPermission(docId, userId)) {
-        //     logger.warn("用户没有权限访问文档, docId: {}, userId: {}", docId, userId);
-        //     session.close(new CloseStatus(4003, "您没有权限访问此文档"));
-        //     return;
-        // }
+        if (!docPermissionService.hasViewPermission(docId, userId)) {
+            logger.warn("用户没有权限访问文档, docId: {}, userId: {}", docId, userId);
+            session.close(new CloseStatus(4003, "您没有权限访问此文档"));
+            return;
+        }
 
         // 将会话添加到文档会话列表
         DOCUMENT_SESSIONS.computeIfAbsent(docId, k -> ConcurrentHashMap.newKeySet()).add(session);
@@ -275,6 +274,7 @@ public class DocumentWebSocketHandler extends TextWebSocketHandler {
         Integer userId = messageMap.get("userId") instanceof Number ? ((Number) messageMap.get("userId")).intValue() : null;
         String username = (String) messageMap.get("username");
         Integer cursorPosition = messageMap.get("cursorPosition") instanceof Number ? ((Number) messageMap.get("cursorPosition")).intValue() : null;
+        Integer cursorLength = messageMap.get("cursorLength") instanceof Number ? ((Number) messageMap.get("cursorLength")).intValue() : 0;
 
         if (userId == null || username == null || cursorPosition == null) {
             return;
@@ -289,6 +289,7 @@ public class DocumentWebSocketHandler extends TextWebSocketHandler {
             response.put("userId", userId);
             response.put("username", username);
             response.put("cursorPosition", cursorPosition);
+            response.put("cursorLength", cursorLength);
 
             String responseJson = objectMapper.writeValueAsString(response);
             for (WebSocketSession otherSession : sessions) {

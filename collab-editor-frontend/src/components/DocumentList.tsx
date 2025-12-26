@@ -11,7 +11,6 @@ import {
   Container,
   Grid,
   Card,
-  CardContent,
   CardActionArea,
   TextField,
   Select,
@@ -45,7 +44,8 @@ import {
   Delete as DeleteIcon,
   Code as CodeIcon,
   Tune as TuneIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon
 } from '@mui/icons-material';
 
 interface Document {
@@ -367,7 +367,7 @@ const DocumentList: React.FC = () => {
           } else {
             setIsAdmin(false);
             if (localStorage.getItem('role') === 'admin') {
-              localStorage.setItem('role', currentRole || 'user');
+              localStorage.setItem('role', currentRole || 'editor');
             }
           }
         }
@@ -440,16 +440,28 @@ const DocumentList: React.FC = () => {
               欢迎，{localStorage.getItem('username')}
             </Typography>
             {isAdmin && (
-              <Button
-                variant="contained"
-                color="warning"
-                size="small"
-                startIcon={<DashboardIcon />}
-                onClick={() => navigate('/monitor')}
-                sx={{ display: { xs: 'none', sm: 'flex' } }}
-              >
-                系统监控
-              </Button>
+              <>
+                <Button
+                  variant="contained"
+                  color="warning"
+                  size="small"
+                  startIcon={<DashboardIcon />}
+                  onClick={() => navigate('/monitor')}
+                  sx={{ display: { xs: 'none', sm: 'flex' } }}
+                >
+                  系统监控
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  startIcon={<AdminPanelSettingsIcon />}
+                  onClick={() => navigate('/admin')}
+                  sx={{ ml: 1, display: { xs: 'none', sm: 'flex' } }}
+                >
+                  管理后台
+                </Button>
+              </>
             )}
             <Button color="inherit" onClick={() => navigate('/profile')} startIcon={<PersonIcon />} sx={{ display: { xs: 'none', sm: 'flex' } }}>个人资料</Button>
             <Button

@@ -212,9 +212,9 @@ public class DocPermissionServiceImpl implements DocPermissionService {
             return true;
         }
 
-        // 检查是否有编辑权限
+        // 检查是否有编辑权限（类型1）或管理员权限（类型2）
         DocPermission permission = docPermissionMapper.getPermissionByDocIdAndUserId(docId, userId);
-        return permission != null && permission.getPermissionType() == 1;
+        return permission != null && (permission.getPermissionType() == 1 || permission.getPermissionType() == 2);
     }
 
     /**

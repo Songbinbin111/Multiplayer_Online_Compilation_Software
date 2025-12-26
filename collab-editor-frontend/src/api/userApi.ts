@@ -66,5 +66,13 @@ export const userApi = {
   // 重置密码
   resetPassword: (token: string, newPassword: string) => {
     return api.post('/api/user/reset-password', { token, newPassword }).then(res => res.data);
+  },
+  // 更新用户角色
+  updateRole: (userId: number, newRole: string) => {
+    return api.post('/api/user/update-role', null, { params: { userId, newRole } }).then(res => res.data);
+  },
+  // 删除用户
+  deleteUser: (userId: number) => {
+    return api.post('/api/user/delete', null, { params: { userId } }).then(res => res.data);
   }
 };

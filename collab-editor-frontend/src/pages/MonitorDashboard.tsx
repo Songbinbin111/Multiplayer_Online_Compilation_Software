@@ -8,6 +8,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import EditIcon from '@mui/icons-material/Edit';
 import { errorLogger } from '../utils/errorLogger';
 import { operationLogApi, type OperationLog } from '../api/operationLogApi';
+import api from '../api/request';
 
 // 用户数据类型
 interface User {
@@ -235,14 +236,11 @@ const MonitorDashboard: React.FC = () => {
   // 获取用户列表
   const fetchUsers = async (page: number = 1) => {
     try {
-      const response = await fetch(`/api/user/list/page?page=${page}&pageSize=10`);
-      if (response.ok) {
-        const res = await response.json();
-        if (res.code === 200) {
-          setUsers(res.data.users);
-          setUserTotal(res.data.total);
-          setUserPage(res.data.current);
-        }
+      const response = await api.get(`/api/user/list/page?page=${page}&pageSize=10`);
+      if (response.data.code === 200) {
+        setUsers(response.data.data.users);
+        setUserTotal(response.data.data.total);
+        setUserPage(response.data.data.current);
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -289,18 +287,15 @@ const MonitorDashboard: React.FC = () => {
     if (!editingUser || !newRole) return;
 
     try {
-      const response = await fetch(`/api/user/update-role?userId=${editingUser.id}&newRole=${newRole}`, {
-        method: 'POST',
-      });
-      const res = await response.json();
-      if (res.code === 200) {
+      const response = await api.post(`/api/user/update-role?userId=${editingUser.id}&newRole=${newRole}`);
+      if (response.data.code === 200) {
         // 刷新列表
         fetchUsers(userPage);
         setShowRoleDialog(false);
         setEditingUser(null);
         setNewRole('');
       } else {
-        alert('更新失败: ' + res.message);
+        alert('更新失败: ' + response.data.message);
       }
     } catch (error) {
       console.error('Failed to update role:', error);
@@ -317,12 +312,9 @@ const MonitorDashboard: React.FC = () => {
   // 获取调查统计
   const fetchSurveyStats = async () => {
     try {
-      const response = await fetch('/api/survey/stats');
-      if (response.ok) {
-        const res = await response.json();
-        if (res.code === 200) {
-          setSurveyStats(res.data);
-        }
+      const response = await api.get('/api/survey/stats');
+      if (response.data.code === 200) {
+        setSurveyStats(response.data.data);
       }
     } catch (error) {
       console.error('Failed to fetch survey stats:', error);
@@ -340,23 +332,19 @@ const MonitorDashboard: React.FC = () => {
         return;
       }
 
-      const response = await fetch('/api/survey/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId,
-          score: surveyScore,
-          comment: surveyComment
-        })
+      const response = await api.post('/api/survey/submit', {
+        userId: userId,
+        score: surveyScore,
+        comment: surveyComment
       });
-      const res = await response.json();
-      if (res.code === 200) {
+
+      if (response.data.code === 200) {
         alert('感谢您的反馈！');
         setShowSurveyDialog(false);
         setSurveyComment('');
         fetchSurveyStats();
       } else {
-        alert('提交失败: ' + res.message);
+        alert('提交失败: ' + response.data.message);
       }
     } catch (error) {
       console.error('Failed to submit survey:', error);
@@ -873,9 +861,9 @@ const MonitorDashboard: React.FC = () => {
                     平均满意度评分
                   </Typography>
                   <Typography variant="h2" color="primary">
-                    {surveyStats?.averageScore || '0.0'}
+                    {surveyStats?.averageScore?.toFixed(1) || '0.0'}
                   </Typography>
-                  <Rating value={parseFloat(surveyStats?.averageScore || '0')} readOnly precision={0.1} size="large" />
+                  <Rating value={surveyStats?.averageScore || 0} readOnly precision={0.1} size="large" />
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     共收到 {surveyStats?.total || 0} 条反馈
                   </Typography>

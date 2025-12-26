@@ -37,7 +37,7 @@ export const activityApi = {
     startTime?: string;
     endTime?: string;
   }) => {
-    return api.get('/api/activity/stats', { params }).then(res => res.data);
+    return api.get('/api/activity/statistics', { params }).then(res => res.data);
   },
   
   // 获取用户活跃天数

@@ -97,6 +97,13 @@ const Editor: React.FC = () => {
     getUserColor
   } = useCollaboration(docId, content, setContent, quillRef);
 
+  useEffect(() => {
+    const el = document.querySelector('.quill-container .ql-editor') as HTMLElement | null;
+    if (el) {
+      setQuillContainer(el);
+    }
+  }, []);
+
   /**
    * 处理自动保存逻辑
    * @param newContent 编辑器的新内容
@@ -274,8 +281,11 @@ const Editor: React.FC = () => {
               placeholder="开始编辑文档..."
               modules={{ toolbar: true }}
               formats={["bold", "italic", "underline", "strike", "list", "bullet", "link"]}
-              onSelectionChange={handleSelectionChange}
+              onChangeSelection={handleSelectionChange}
             />
+            <style>{`
+              @keyframes collabBlink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+            `}</style>
             {/* 渲染其他用户的光标：使用 Portal 渲染到 Quill 容器内 */}
             {cursorPositions.map((cursor) => {
               let style: React.CSSProperties = { display: 'none' };
@@ -286,14 +296,15 @@ const Editor: React.FC = () => {
 
                 if (quill && typeof quill.getBounds === 'function') {
                   try {
-                    const length = quill.getLength();
-                    const pos = Math.min(cursor.position, length - 1);
-                    const bounds = quill.getBounds(pos);
+                    const contentLength = quill.getLength();
+                    const pos = Math.min(cursor.position, contentLength - 1);
+                    const bounds = quill.getBounds(pos, cursor.length || 0);
                     if (bounds) {
                       style = {
                         left: `${bounds.left}px`,
                         top: `${bounds.top}px`,
                         height: `${bounds.height}px`,
+                        width: typeof bounds.width === 'number' ? `${bounds.width}px` : undefined,
                         display: 'block',
                         position: 'absolute',
                         pointerEvents: 'none',
@@ -301,7 +312,6 @@ const Editor: React.FC = () => {
                       };
                     }
                   } catch (e) {
-                    // 忽略光标渲染错误，避免影响主流程
                   }
                 }
               }
@@ -311,11 +321,27 @@ const Editor: React.FC = () => {
                   key={cursor.userId}
                   style={style}
                 >
+                  {cursor.length && cursor.length > 0 ? (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: (style as any).width,
+                        height: (style as any).height,
+                        backgroundColor: `${color}22`,
+                        borderLeft: `2px solid ${color}`,
+                        borderRight: `2px solid ${color}`,
+                        borderRadius: 2
+                      }}
+                    />
+                  ) : null}
                   <div style={{
                     position: 'absolute',
                     width: '2px',
                     backgroundColor: color,
-                    height: '100%'
+                    height: '100%',
+                    animation: 'collabBlink 1s step-start infinite'
                   }}>
                     <div style={{
                       position: 'absolute',
@@ -327,7 +353,27 @@ const Editor: React.FC = () => {
                       borderRadius: '4px',
                       fontSize: '10px',
                       whiteSpace: 'nowrap'
-                    }}>{cursor.username}</div>
+                    }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 14,
+                          height: 14,
+                          borderRadius: '50%',
+                          backgroundColor: '#ffffff55',
+                          color: 'white',
+                          fontSize: 10,
+                          fontWeight: 700
+                        }}>{cursor.username?.charAt(0).toUpperCase()}</span>
+                        {cursor.username}
+                      </span>
+                    </div>
                   </div>
                 </div>,
                 quillContainer

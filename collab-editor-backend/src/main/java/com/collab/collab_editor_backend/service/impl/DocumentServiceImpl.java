@@ -198,14 +198,14 @@ public class DocumentServiceImpl implements DocumentService {
             Document document = documentMapper.selectById(docId);
             if (document == null) {
                 logger.debug("文档不存在或已被删除，docId: {}", docId);
-                return Result.error("文档不存在或已被删除");
+                return Result.error(404, "文档不存在或已被删除");
             }
             
-            // 2. 共享模式下，所有用户都有权限查看
-            // if (!docPermissionService.hasViewPermission(docId, userId)) {
-            //     logger.debug("用户没有查看权限，docId: {}, userId: {}", docId, userId);
-            //     return Result.error("您没有权限查看此文档");
-            // }
+            // 2. 检查查看权限
+            if (!docPermissionService.hasViewPermission(docId, userId)) {
+                logger.debug("用户没有查看权限，docId: {}, userId: {}", docId, userId);
+                return Result.error(403, "您没有权限查看此文档");
+            }
 
             logger.debug("获取到文档对象：{}", document);
             logger.debug("文档ID: {}, 标题: {}, content: {}", document.getId(), document.getTitle(), document.getContent());
@@ -254,13 +254,13 @@ public class DocumentServiceImpl implements DocumentService {
             // 1. 验证文档是否存在
             Document document = documentMapper.selectById(docId);
             if (document == null) {
-                return Result.error("文档不存在或已被删除");
+                return Result.error(404, "文档不存在或已被删除");
             }
 
-            // 2. 共享模式下，所有用户都有权限修改
-            // if (!docPermissionService.hasEditPermission(docId, userId) && !docPermissionService.hasAdminPermission(docId, userId)) {
-            //     return Result.error("您没有权限修改此文档");
-            // }
+            // 2. 检查编辑权限（管理员也可以编辑）
+            if (!docPermissionService.hasEditPermission(docId, userId) && !docPermissionService.hasAdminPermission(docId, userId)) {
+                return Result.error(403, "您没有权限修改此文档");
+            }
 
             // 3. 直接将内容保存在数据库中（暂时不使用MinIO）
             document.setContent(content);

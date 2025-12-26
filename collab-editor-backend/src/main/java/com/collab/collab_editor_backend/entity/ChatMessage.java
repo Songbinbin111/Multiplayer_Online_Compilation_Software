@@ -3,6 +3,7 @@ package com.collab.collab_editor_backend.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -18,7 +19,10 @@ public class ChatMessage {
     private Long senderId; // 发送者ID，对应表中 sender_id 字段
     private Long receiverId; // 接收者ID，对应表中 receiver_id 字段
     private String content; // 消息内容，对应表中 content 字段
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime sendTime; // 发送时间，对应表中 send_time 字段
+    
     private Integer isRead; // 是否已读：0-未读，1-已读，对应表中 is_read 字段
     
     // 文件相关字段，用于文件共享功能

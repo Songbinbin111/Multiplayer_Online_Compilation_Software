@@ -93,4 +93,11 @@ public interface UserService {
      * @return 修改结果
      */
     Result<?> updateUserRole(Long userId, String newRole);
+
+    /**
+     * 删除用户
+     * @param userId 用户ID
+     * @return 删除结果
+     */
+    Result<?> deleteUser(Long userId);
 }

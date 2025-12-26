@@ -57,6 +57,7 @@ export const ReactQuillWrapper = forwardRef((props: any, ref: any) => {
           font-size: 1rem;
         }
         .quill-container .ql-editor {
+          position: relative;
           min-height: 100%;
         }
         .quill-container .ql-toolbar {

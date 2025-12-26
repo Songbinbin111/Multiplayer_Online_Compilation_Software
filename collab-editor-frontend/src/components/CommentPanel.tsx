@@ -53,12 +53,7 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
     }
   }, [comments]);
 
-  // 监听selection变化，如果有选中文本，自动打开创建表单
-  useEffect(() => {
-    if (selection && selection.length > 0) {
-      setShowCreateForm(true);
-    }
-  }, [selection]);
+  // 保持选择仅用于显示，不自动弹出创建表单
 
   // 获取文档的所有评论
   const fetchComments = async () => {
@@ -311,7 +306,11 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
                 placeholder="回复评论..."
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                sx={{ mb: 1 }}
+                sx={{
+                  mb: 1,
+                  '& .MuiInputBase-input': { color: '#000', fontWeight: 700 },
+                  '& .MuiInputBase-input::placeholder': { color: '#444', opacity: 1, fontWeight: 600 }
+                }}
               />
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                 <Button size="small" onClick={() => { setReplyingTo(null); setReplyContent(''); }}>
@@ -365,7 +364,11 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
             placeholder="输入评论内容..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            sx={{ mb: 1 }}
+            sx={{
+              mb: 1,
+              '& .MuiInputBase-input': { color: '#000', fontWeight: 700 },
+              '& .MuiInputBase-input::placeholder': { color: '#444', opacity: 1, fontWeight: 600 }
+            }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
             <Button onClick={() => setShowCreateForm(false)}>取消</Button>

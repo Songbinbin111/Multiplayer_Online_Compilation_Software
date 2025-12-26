@@ -14,7 +14,9 @@ import {
   FormControl,
   InputLabel,
   Paper,
-  Chip
+  Chip,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -25,7 +27,7 @@ interface DocPermission {
   docId: number;
   userId: number;
   username?: string;
-  permissionType: number; // 0-查看，1-编辑
+  permissionType: number;
   createTime: string;
 }
 
@@ -48,6 +50,7 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [selectedPermission, setSelectedPermission] = useState<number>(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   // 获取文档权限列表
   const fetchPermissions = async () => {
@@ -61,11 +64,9 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
       setPermissions(data);
       // 检查当前用户是否是文档所有者
       const userPermission = data.find((p: DocPermission) => p.userId === currentUserId);
-      if (userPermission && userPermission.permissionType === 1) {
-        setIsOwner(true);
-      } else {
-        setIsOwner(false);
-      }
+      const isAdminRole = localStorage.getItem('role') === 'admin';
+      const hasAdminPermission = !!(userPermission && userPermission.permissionType === 2);
+      setIsOwner(isAdminRole || hasAdminPermission);
     } catch (error) {
       console.error('获取权限列表失败:', error);
       setPermissions([]);
@@ -93,7 +94,8 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
       await permissionApi.assignPermission(docId, selectedUser, selectedPermission);
       fetchPermissions();
       setSelectedUser(null);
-      setSelectedPermission(0);
+      // 保留当前选择的权限类型，方便继续分配
+      setOpenSnackbar(true);
     } catch (error) {
       console.error('分配权限失败:', error);
     }
@@ -134,7 +136,10 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
 
   // 获取权限类型文本
   const getPermissionText = (type: number) => {
-    return type === 0 ? '查看' : '编辑';
+    if (type === 0) return '查看';
+    if (type === 1) return '编辑';
+    if (type === 2) return '管理员';
+    return '未知';
   };
 
   // 检查用户是否已有权限
@@ -148,6 +153,10 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
     fetchAllUsers();
   }, [docId]);
 
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
@@ -156,15 +165,22 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
 
       {/* 分配权限表单 */}
       {isOwner && (
-        <Paper sx={{ p: 2, m: 2, bgcolor: 'grey.50' }}>
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>分配权限</Typography>
+        <Paper sx={{ p: 2, m: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}>
+          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.primary' }}>分配权限</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>选择用户</InputLabel>
+              <InputLabel sx={{ color: 'text.primary', '&.Mui-focused': { color: '#1976d2' } }}>选择用户</InputLabel>
               <Select
                 value={selectedUser || ''}
                 label="选择用户"
                 onChange={(e) => setSelectedUser(Number(e.target.value))}
+                sx={{
+                  color: 'text.primary',
+                  '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'text.primary' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#1976d2' },
+                  '.MuiSvgIcon-root': { color: 'text.primary' }
+                }}
               >
                 {allUsers.map(user => (
                   <MenuItem key={user.id} value={user.id} disabled={hasPermission(user.id)}>
@@ -174,11 +190,18 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
               </Select>
             </FormControl>
             <FormControl fullWidth size="small">
-              <InputLabel>权限类型</InputLabel>
+              <InputLabel sx={{ color: 'text.primary', '&.Mui-focused': { color: '#1976d2' } }}>权限类型</InputLabel>
               <Select
                 value={selectedPermission}
                 label="权限类型"
                 onChange={(e) => setSelectedPermission(Number(e.target.value))}
+                sx={{
+                  color: 'text.primary',
+                  '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'text.primary' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#1976d2' },
+                  '.MuiSvgIcon-root': { color: 'text.primary' }
+                }}
               >
                 <MenuItem value={0}>查看权限</MenuItem>
                 <MenuItem value={1}>编辑权限</MenuItem>
@@ -229,6 +252,7 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
                         >
                           <MenuItem value={0}>查看</MenuItem>
                           <MenuItem value={1}>编辑</MenuItem>
+                          <MenuItem value={2}>管理员</MenuItem>
                         </Select>
                       </FormControl>
                     ) : (
@@ -250,6 +274,18 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
           </List>
         )}
       </Box>
+
+      {/* 成功提示 Snackbar */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+          权限分配成功
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

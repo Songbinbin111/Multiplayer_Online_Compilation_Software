@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userApi } from '../api/userApi';
+import { surveyApi } from '../api/surveyApi';
 import type { User } from '../api/userApi';
 import ActivityAnalysis from './ActivityAnalysis';
 import {
@@ -18,7 +19,12 @@ import {
   IconButton,
   Divider,
   Stack,
-  Grid
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Rating
 } from '@mui/material';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import {
@@ -37,6 +43,8 @@ const Profile: React.FC = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'profile' | 'activity'>('profile');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackForm, setFeedbackForm] = useState({ score: 5, comment: '' });
   const navigate = useNavigate();
 
   // 检查是否登录
@@ -146,6 +154,23 @@ const Profile: React.FC = () => {
     setAvatarFile(null);
   };
 
+  const handleFeedbackSubmit = async () => {
+    if (!user) return;
+    try {
+      await surveyApi.submit({
+        userId: user.id,
+        score: feedbackForm.score,
+        comment: feedbackForm.comment
+      });
+      alert('感谢您的反馈！');
+      setFeedbackOpen(false);
+      setFeedbackForm({ score: 5, comment: '' });
+    } catch (error) {
+      console.error('提交反馈失败:', error);
+      alert('提交反馈失败，请稍后重试');
+    }
+  };
+
   if (loading && !user) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -230,15 +255,31 @@ const Profile: React.FC = () => {
                 </Box>
                 <Typography variant="h5" sx={{ mt: 2 }}>{user.nickname || user.username}</Typography>
                 <Typography variant="body2" color="text.secondary">{user.role || '普通用户'}</Typography>
+                {user.role === 'admin' && (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    size="small"
+                    sx={{ mt: 1 }}
+                    onClick={() => navigate('/admin')}
+                  >
+                    进入管理员面板
+                  </Button>
+                )}
               </Grid>
 
               <Grid size={{ xs: 12, md: 8 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6">基本信息</Typography>
                   {!isEditing ? (
-                    <Button startIcon={<EditIcon />} onClick={() => setIsEditing(true)}>
-                      编辑资料
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button onClick={() => setFeedbackOpen(true)} variant="outlined">
+                        满意度反馈
+                      </Button>
+                      <Button startIcon={<EditIcon />} onClick={() => setIsEditing(true)}>
+                        编辑资料
+                      </Button>
+                    </Stack>
                   ) : (
                     <Stack direction="row" spacing={1}>
                       <Button startIcon={<CancelIcon />} onClick={handleCancelEdit} color="inherit">
@@ -324,6 +365,33 @@ const Profile: React.FC = () => {
           )}
         </Box>
       </Paper>
+      <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)}>
+        <DialogTitle>满意度反馈</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Typography component="legend">请为我们的服务评分</Typography>
+            <Rating
+              name="simple-controlled"
+              value={feedbackForm.score}
+              onChange={(_event, newValue) => {
+                setFeedbackForm({ ...feedbackForm, score: newValue || 5 });
+              }}
+            />
+            <TextField
+              label="您的建议"
+              multiline
+              rows={4}
+              value={feedbackForm.comment}
+              onChange={(e) => setFeedbackForm({ ...feedbackForm, comment: e.target.value })}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFeedbackOpen(false)}>取消</Button>
+          <Button onClick={handleFeedbackSubmit} variant="contained">提交</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

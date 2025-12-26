@@ -11,6 +11,8 @@ import { permissionApi } from './permissionApi';
 import { taskApi } from './taskApi';
 import { userApi } from './userApi';
 import { videoMeetingApi } from './VideoMeetingApi';
+import { surveyApi } from './surveyApi';
+import { activityApi } from './activityApi';
 
 // 导出所有API
 export {
@@ -24,7 +26,9 @@ export {
   permissionApi,
   taskApi,
   userApi,
-  videoMeetingApi
+  videoMeetingApi,
+  surveyApi,
+  activityApi
 };
 
 // 导出所有类型
