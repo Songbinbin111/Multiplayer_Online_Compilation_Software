@@ -90,10 +90,33 @@ const ActivityAnalysis: React.FC = () => {
       });
 
       if (response.code === 200) {
-        setStats(response.data);
+        const raw = response.data;
+        let list: ActivityTypeStats[] = [];
+        if (Array.isArray(raw)) {
+          list = raw.map((i: any) => ({
+            activityType: String(i?.activityType ?? i?.type ?? '未知'),
+            count: Number(i?.count) || 0
+          }));
+        } else if (Array.isArray(raw?.activityDistribution)) {
+          list = raw.activityDistribution.map((i: any) => ({
+            activityType: String(i?.activityType ?? i?.type ?? '未知'),
+            count: Number(i?.count) || 0
+          }));
+        } else if (raw && typeof raw === 'object') {
+          list = Object.entries(raw)
+            .filter(([, v]) => typeof v === 'number' || (v && typeof v === 'object' && 'count' in (v as any)))
+            .map(([k, v]: any) => ({
+              activityType: String(k),
+              count: typeof v === 'number' ? v : Number(v?.count) || 0
+            }));
+        }
+        setStats(Array.isArray(list) ? list : []);
+      } else {
+        setStats([]);
       }
     } catch (err) {
       console.error('获取行为统计失败:', err);
+      setStats([]);
     }
   };
 
@@ -108,10 +131,19 @@ const ActivityAnalysis: React.FC = () => {
       });
 
       if (response.code === 200) {
-        setActiveDays(response.data);
+        const data = response.data;
+        const days = typeof data === 'number'
+          ? data
+          : (typeof data === 'object' && data !== null && 'activeDays' in data
+            ? Number((data as any).activeDays)
+            : 0);
+        setActiveDays(Number.isFinite(days) ? days : 0);
+      } else {
+        setActiveDays(0);
       }
     } catch (err) {
       console.error('获取活跃天数失败:', err);
+      setActiveDays(0);
     }
   };
 
@@ -186,7 +218,7 @@ const ActivityAnalysis: React.FC = () => {
                 总行为次数
               </Typography>
               <Typography variant="h4" component="div" color="primary.main">
-                {stats.reduce((sum, stat) => sum + stat.count, 0)}
+                {(Array.isArray(stats) ? stats.reduce((sum, stat) => sum + (Number(stat.count) || 0), 0) : 0)}
               </Typography>
             </CardContent>
           </Card>

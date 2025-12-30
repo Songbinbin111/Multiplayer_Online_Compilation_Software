@@ -107,8 +107,17 @@ const Editor: React.FC = () => {
   /**
    * 处理自动保存逻辑
    * @param newContent 编辑器的新内容
+   * @param delta 变更内容
+   * @param source 变更来源
+   * @param editor 编辑器实例
    */
-  const handleAutoSave = (newContent: string) => {
+  const handleAutoSave = (newContent: string, _delta: any, source: string, _editor: any) => {
+    // 只有用户手动修改的内容才需要处理保存和广播
+    // 忽略来自 API 的更新（即 WebSocket 同步过来的内容）
+    if (source !== 'user') {
+      return;
+    }
+
     setContent(newContent);
 
     // 防抖机制：延迟 1 秒后保存到数据库

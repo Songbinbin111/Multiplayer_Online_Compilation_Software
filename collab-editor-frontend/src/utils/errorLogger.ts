@@ -109,6 +109,10 @@ class ErrorLogger {
 
   private async flushLogs() {
     if (this.logs.length === 0) return;
+    if (import.meta.env.DEV) {
+      this.logs = [];
+      return;
+    }
 
     const logsToSend = [...this.logs].map(log => ({
       ...log,
@@ -147,6 +151,7 @@ class ErrorLogger {
 
   public async sendLocalStorageLogs() {
     try {
+      if (import.meta.env.DEV) return;
       const unsentLogs = JSON.parse(localStorage.getItem('unsentErrorLogs') || '[]');
       if (unsentLogs.length > 0) {
         const formattedLogs = unsentLogs.map((log: any) => ({

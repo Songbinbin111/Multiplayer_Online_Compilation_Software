@@ -35,6 +35,7 @@ interface DocPermission {
 interface User {
   id: number;
   username: string;
+  role?: string;
 }
 
 // 定义组件属性
@@ -56,17 +57,17 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
   const fetchPermissions = async () => {
     try {
       const response = await permissionApi.getPermissionsByDocId(docId);
-      let data = response.data || [];
-      // 确保data是数组类型
-      if (!Array.isArray(data)) {
-        data = [];
-      }
-      setPermissions(data);
-      // 检查当前用户是否是文档所有者
-      const userPermission = data.find((p: DocPermission) => p.userId === currentUserId);
+      const arr = Array.isArray(response?.data?.data)
+        ? (response.data.data as DocPermission[])
+        : Array.isArray(response?.data)
+          ? (response.data as DocPermission[])
+          : Array.isArray(response as any)
+            ? (response as any as DocPermission[])
+            : [];
+      setPermissions(arr);
+      // 检查当前用户是否是管理员
       const isAdminRole = localStorage.getItem('role') === 'admin';
-      const hasAdminPermission = !!(userPermission && userPermission.permissionType === 2);
-      setIsOwner(isAdminRole || hasAdminPermission);
+      setIsOwner(isAdminRole);
     } catch (error) {
       console.error('获取权限列表失败:', error);
       setPermissions([]);
@@ -78,17 +79,36 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
   const fetchAllUsers = async () => {
     try {
       const response = await userApi.getList();
-      const data = response.data || [];
-      setAllUsers(data);
+      const arr = Array.isArray(response?.data)
+        ? (response.data as User[])
+        : Array.isArray(response as any)
+          ? (response as any as User[])
+          : [];
+      setAllUsers(arr);
     } catch (error) {
       console.error('获取用户列表失败:', error);
       setAllUsers([]);
     }
   };
 
+  // 检查用户是否允许被赋予编辑权限
+  const canAssignEdit = (userId: number) => {
+    const user = allUsers.find(u => u.id === userId);
+    // 如果找不到用户，默认允许（或者根据需求默认禁止）
+    if (!user) return true;
+    // 只有编辑者和管理员可以被赋予编辑权限，观察者只能赋予查看权限
+    return user.role !== 'viewer';
+  };
+
   // 分配权限
   const handleAssignPermission = async () => {
     if (!selectedUser) return;
+
+    // 再次校验
+    if (selectedPermission === 1 && !canAssignEdit(selectedUser)) {
+      alert('观察者只能被赋予查看权限');
+      return;
+    }
 
     try {
       await permissionApi.assignPermission(docId, selectedUser, selectedPermission);
@@ -184,7 +204,7 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
               >
                 {allUsers.map(user => (
                   <MenuItem key={user.id} value={user.id} disabled={hasPermission(user.id)}>
-                    {user.username}
+                    {user.username} {user.role ? `(${user.role})` : ''}
                   </MenuItem>
                 ))}
               </Select>
@@ -251,7 +271,9 @@ const PermissionPanel: React.FC<PermissionPanelProps> = ({ docId, currentUserId,
                           disableUnderline
                         >
                           <MenuItem value={0}>查看</MenuItem>
-                          <MenuItem value={1}>编辑</MenuItem>
+                          <MenuItem value={1} disabled={!canAssignEdit(permission.userId)}>
+                            编辑 {!canAssignEdit(permission.userId) ? '(限)' : ''}
+                          </MenuItem>
                           <MenuItem value={2}>管理员</MenuItem>
                         </Select>
                       </FormControl>

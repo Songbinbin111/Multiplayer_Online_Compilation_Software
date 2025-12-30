@@ -1,6 +1,8 @@
 package com.collab.collab_editor_backend.controller;
 
 import com.collab.collab_editor_backend.entity.DocPermission;
+import com.collab.collab_editor_backend.entity.User;
+import com.collab.collab_editor_backend.mapper.UserMapper;
 import com.collab.collab_editor_backend.service.DocPermissionService;
 import com.collab.collab_editor_backend.util.JwtUtil;
 import com.collab.collab_editor_backend.util.Result;
@@ -23,6 +25,9 @@ public class DocPermissionController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserMapper userMapper;
+
     /**
      * 为用户分配文档权限接口
      * @param docId 文档ID
@@ -35,9 +40,14 @@ public class DocPermissionController {
     public Result<?> assignPermission(@PathVariable Long docId, @PathVariable Long userId, 
                                      @PathVariable Integer permissionType, HttpServletRequest request) {
         try {
-            // 验证用户身份（只有文档所有者或管理员可以分配权限）
+            // 验证用户身份（只有管理员可以分配权限）
             String authorization = request.getHeader("Authorization");
             Long currentUserId = jwtUtil.getUserIdFromToken(authorization);
+            
+            User user = userMapper.selectById(currentUserId);
+            if (user == null || !"admin".equals(user.getRole())) {
+                return Result.error("权限不足，只有管理员可以分配权限");
+            }
             
             // 分配权限
             DocPermission permission = docPermissionService.assignPermission(docId, userId, permissionType);
@@ -57,9 +67,14 @@ public class DocPermissionController {
     @DeleteMapping("/remove/{docId}/{userId}")
     public Result<?> removePermission(@PathVariable Long docId, @PathVariable Long userId, HttpServletRequest request) {
         try {
-            // 验证用户身份（只有文档所有者或管理员可以移除权限）
+            // 验证用户身份（只有管理员可以移除权限）
             String authorization = request.getHeader("Authorization");
             Long currentUserId = jwtUtil.getUserIdFromToken(authorization);
+            
+            User user = userMapper.selectById(currentUserId);
+            if (user == null || !"admin".equals(user.getRole())) {
+                return Result.error("权限不足，只有管理员可以移除权限");
+            }
             
             boolean success = docPermissionService.removePermission(docId, userId);
             if (success) {
@@ -84,9 +99,25 @@ public class DocPermissionController {
     public Result<?> updatePermission(@PathVariable Long docId, @PathVariable Long userId, 
                                      @PathVariable Integer permissionType, HttpServletRequest request) {
         try {
-            // 验证用户身份（只有文档所有者或管理员可以更新权限）
+            // 验证用户身份（只有管理员可以更新权限）
             String authorization = request.getHeader("Authorization");
             Long currentUserId = jwtUtil.getUserIdFromToken(authorization);
+            
+            User user = userMapper.selectById(currentUserId);
+            if (user == null || !"admin".equals(user.getRole())) {
+                return Result.error("权限不足，只有管理员可以更新权限");
+            }
+
+            // 检查目标用户角色限制
+            User targetUser = userMapper.selectById(userId);
+            if (targetUser != null) {
+                if ("viewer".equals(targetUser.getRole()) && permissionType != 0) {
+                    return Result.error("观察者只能被赋予查看权限");
+                }
+                if (permissionType == 1 && !"editor".equals(targetUser.getRole()) && !"admin".equals(targetUser.getRole())) {
+                     return Result.error("只有编辑者才能被赋予编辑权限");
+                }
+            }
             
             boolean success = docPermissionService.updatePermission(docId, userId, permissionType);
             if (success) {

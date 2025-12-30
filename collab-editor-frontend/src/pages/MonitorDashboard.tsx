@@ -861,9 +861,9 @@ const MonitorDashboard: React.FC = () => {
                     平均满意度评分
                   </Typography>
                   <Typography variant="h2" color="primary">
-                    {surveyStats?.averageScore?.toFixed(1) || '0.0'}
+                    {(Number(surveyStats?.averageScore ?? 0)).toFixed(1)}
                   </Typography>
-                  <Rating value={surveyStats?.averageScore || 0} readOnly precision={0.1} size="large" />
+                  <Rating value={Number(surveyStats?.averageScore ?? 0)} readOnly precision={0.1} size="large" />
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     共收到 {surveyStats?.total || 0} 条反馈
                   </Typography>

@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { errorLogger } from './utils/errorLogger';
@@ -44,6 +44,16 @@ const App: React.FC = () => {
     window.addEventListener('storage', checkAuth);
     return () => window.removeEventListener('storage', checkAuth);
   }, [isAuthenticated, userRole]);
+
+  // 根据路由变化同步认证状态，解决登录后立即跳转受限路由仍为未认证的问题
+  const AuthSync: React.FC = () => {
+    const location = useLocation();
+    useEffect(() => {
+      setIsAuthenticated(!!localStorage.getItem('token'));
+      setUserRole(localStorage.getItem('role') || 'editor');
+    }, [location]);
+    return null;
+  };
 
   const theme = createTheme({
     palette: {
@@ -326,6 +336,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <AuthSync />
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Suspense fallback={<div className="loading">加载中...</div>}>

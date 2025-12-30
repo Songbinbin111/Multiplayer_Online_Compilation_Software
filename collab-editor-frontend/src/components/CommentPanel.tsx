@@ -184,9 +184,9 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
       }
 
       parts.push(
-        <span key={`mention-${keyCounter++}`} style={{ color: '#1976d2', fontWeight: 'bold' }}>
+        <Box key={`mention-${keyCounter++}`} component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>
           {match[0]}
-        </span>
+        </Box>
       );
 
       lastIndex = match.index + match[0].length;
@@ -235,9 +235,17 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
 
     return (
       <Box key={comment.id} sx={{ mb: 2, pl: isReply ? 4 : 0 }}>
-        <Paper elevation={isReply ? 0 : 1} sx={{ p: 2, bgcolor: isReply ? 'grey.50' : 'background.paper' }}>
+        <Paper
+          elevation={isReply ? 0 : 1}
+          sx={{
+            p: 2,
+            bgcolor: isReply ? 'rgba(94,106,210,0.08)' : 'background.paper',
+            border: isReply ? 1 : 0,
+            borderColor: isReply ? 'primary.main' : 'transparent'
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-            <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.light', fontSize: '0.875rem' }}>
+            <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
               {comment.username.charAt(0).toUpperCase()}
             </Avatar>
             <Box sx={{ flexGrow: 1 }}>
@@ -279,6 +287,7 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
               <Button
                 size="small"
                 startIcon={<ReplyIcon />}
+                color="primary"
                 onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
               >
                 回复
@@ -308,8 +317,8 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
                 onChange={(e) => setReplyContent(e.target.value)}
                 sx={{
                   mb: 1,
-                  '& .MuiInputBase-input': { color: '#000', fontWeight: 700 },
-                  '& .MuiInputBase-input::placeholder': { color: '#444', opacity: 1, fontWeight: 600 }
+                  '& .MuiInputBase-input': { color: 'text.primary' },
+                  '& .MuiInputBase-input::placeholder': { color: 'text.secondary', opacity: 1 }
                 }}
               />
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
@@ -350,9 +359,9 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
 
       {/* 创建评论对话框/区域 */}
       {showCreateForm && (
-        <Paper sx={{ p: 2, m: 2, bgcolor: 'grey.50' }}>
+        <Paper sx={{ p: 2, m: 2, bgcolor: 'background.paper' }}>
           {selection && selection.length > 0 && (
-            <Box sx={{ mb: 1, p: 1, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            <Box sx={{ mb: 1, p: 1, bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 1 }}>
               <Typography variant="caption" color="text.secondary">针对选中文本:</Typography>
               <Typography variant="body2" noWrap>"{selection.text}"</Typography>
             </Box>
@@ -366,8 +375,8 @@ const CommentPanel: React.FC<CommentPanelProps> = ({ docId, currentUserId, selec
             onChange={(e) => setNewComment(e.target.value)}
             sx={{
               mb: 1,
-              '& .MuiInputBase-input': { color: '#000', fontWeight: 700 },
-              '& .MuiInputBase-input::placeholder': { color: '#444', opacity: 1, fontWeight: 600 }
+              '& .MuiInputBase-input': { color: 'text.primary' },
+              '& .MuiInputBase-input::placeholder': { color: 'text.secondary', opacity: 1 }
             }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

@@ -94,10 +94,9 @@ const DocumentList: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [searchTags, setSearchTags] = useState('');
-  const [searchAuthor, setSearchAuthor] = useState('');
   const [sortField, setSortField] = useState('updateTime');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [searchScope, setSearchScope] = useState<'title' | 'title_exact' | 'content' | 'all'>('title');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [searchResults, setSearchResults] = useState<Document[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -224,18 +223,16 @@ const DocumentList: React.FC = () => {
         searchKeyword || undefined,
         startDate || undefined,
         endDate || undefined,
-        searchTags || undefined,
-        searchAuthor || undefined,
         sortField,
-        sortOrder
+        sortOrder,
+        selectedCategory || undefined,
+        searchScope
       );
       const data = response.data;
       // 后端返回的是Result对象，搜索结果在data.data中
       const searchResults = data && data.data ? data.data : [];
       // 确保searchResults始终是一个数组
       setSearchResults(Array.isArray(searchResults) ? searchResults : []);
-      // 清空分类选择
-      setSelectedCategory('');
     } catch (error) {
       console.error('搜索文档失败:', error);
       // 发生错误时设置为空数组
@@ -250,8 +247,6 @@ const DocumentList: React.FC = () => {
     setSearchKeyword('');
     setStartDate('');
     setEndDate('');
-    setSearchTags('');
-    setSearchAuthor('');
     setSortField('updateTime');
     setSortOrder('desc');
     setSearchResults([]);
@@ -498,7 +493,8 @@ const DocumentList: React.FC = () => {
           userId={parseInt(localStorage.getItem('userId') || '0')}
         />
 
-        {/* Create Doc Section */}
+        {/* Create Doc Section（仅管理员可见） */}
+        {isAdmin && (
         <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
             <AddIcon sx={{ mr: 1, color: 'primary.main' }} /> 快速创建文档
@@ -542,6 +538,7 @@ const DocumentList: React.FC = () => {
             <Button type="submit" variant="contained" startIcon={<AddIcon />} sx={{ height: 40 }}>创建</Button>
           </Box>
         </Paper>
+        )}
 
         {/* Filter and Search Combined Bar */}
         <Paper sx={{ p: 2, mb: 4, borderRadius: 2 }}>
@@ -611,7 +608,7 @@ const DocumentList: React.FC = () => {
               >
                 {showAdvancedSearch ? <ExpandLessIcon /> : <TuneIcon fontSize="small" />}
               </Button>
-              {(searchKeyword || startDate || endDate || searchTags || searchAuthor || searchResults.length > 0) && (
+              {(searchKeyword || startDate || endDate || searchResults.length > 0) && (
                 <Button variant="text" onClick={resetSearch} size="small" sx={{ color: 'text.secondary', minWidth: 'auto', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   重置
                 </Button>
@@ -623,12 +620,6 @@ const DocumentList: React.FC = () => {
           <Collapse in={showAdvancedSearch}>
             <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
               <Grid container spacing={2}>
-                <Grid size={{ xs: 6, sm: 3 }}>
-                  <TextField fullWidth label="标签" value={searchTags} onChange={(e) => setSearchTags(e.target.value)} size="small" />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 3 }}>
-                  <TextField fullWidth label="作者" value={searchAuthor} onChange={(e) => setSearchAuthor(e.target.value)} size="small" />
-                </Grid>
                 <Grid size={{ xs: 6, sm: 3 }}>
                   <FormControl fullWidth size="small">
                     <InputLabel>排序</InputLabel>
@@ -645,6 +636,17 @@ const DocumentList: React.FC = () => {
                     <Select value={sortOrder} label="顺序" onChange={(e) => setSortOrder(e.target.value)}>
                       <MenuItem value="desc">降序</MenuItem>
                       <MenuItem value="asc">升序</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 6, sm: 3 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>范围</InputLabel>
+                    <Select value={searchScope} label="范围" onChange={(e) => setSearchScope(e.target.value as any)}>
+                      <MenuItem value="title">标题包含</MenuItem>
+                      <MenuItem value="title_exact">标题精确</MenuItem>
+                      <MenuItem value="content">全文</MenuItem>
+                      <MenuItem value="all">标题或全文</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -730,6 +732,7 @@ const DocumentList: React.FC = () => {
                       }
                     }}
                   >
+                    {isAdmin && (
                     <IconButton
                       className="delete-btn"
                       size="small"
@@ -754,6 +757,7 @@ const DocumentList: React.FC = () => {
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
+                    )}
                     <CardActionArea
                       onClick={() => handleEditDocument(doc.id)}
                       sx={{

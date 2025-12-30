@@ -3,8 +3,14 @@ package com.collab.collab_editor_backend.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.collab.collab_editor_backend.dto.DocCreateDTO;
 import com.collab.collab_editor_backend.entity.Document;
+import com.collab.collab_editor_backend.entity.DocumentVersion;
+import com.collab.collab_editor_backend.entity.Task;
+import com.collab.collab_editor_backend.entity.Comment;
 import com.collab.collab_editor_backend.mapper.DocumentMapper;
 import com.collab.collab_editor_backend.mapper.DocPermissionMapper;
+import com.collab.collab_editor_backend.mapper.DocumentVersionMapper;
+import com.collab.collab_editor_backend.mapper.TaskMapper;
+import com.collab.collab_editor_backend.mapper.CommentMapper;
 import com.collab.collab_editor_backend.mapper.UserMapper;
 import com.collab.collab_editor_backend.entity.User;
 import com.collab.collab_editor_backend.service.DocumentService;
@@ -14,6 +20,7 @@ import com.collab.collab_editor_backend.service.OperationLogService;
 import com.collab.collab_editor_backend.util.Result;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
@@ -66,6 +73,15 @@ public class DocumentServiceImpl implements DocumentService {
     private DocPermissionMapper docPermissionMapper;
     
     @Autowired
+    private DocumentVersionMapper documentVersionMapper;
+    
+    @Autowired
+    private TaskMapper taskMapper;
+    
+    @Autowired
+    private CommentMapper commentMapper;
+    
+    @Autowired
     private UserMapper userMapper;
 
     @Autowired
@@ -84,6 +100,16 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Result<?> create(DocCreateDTO dto, Long userId) {
         try {
+            // 0. 角色校验：仅管理员和编辑者可以创建文档
+            User user = userMapper.selectById(userId);
+            if (user == null) {
+                return Result.error("未认证或用户不存在");
+            }
+            String role = user.getRole() == null ? "" : user.getRole().trim().toLowerCase();
+            if (!"admin".equals(role)) {
+                return Result.error("权限不足，只有管理员可以创建文档");
+            }
+
             // 1. 构建文档实体
             Document document = new Document();
             document.setTitle(dto.getTitle()); // 设置文档标题
@@ -439,8 +465,19 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Result<?> deleteDocument(Long docId, Long userId) {
         try {
+            // 0. 角色校验：仅管理员可以删除文档
+            User user = userMapper.selectById(userId);
+            if (user == null) {
+                return Result.error("未认证或用户不存在");
+            }
+            String role = user.getRole() == null ? "" : user.getRole().trim().toLowerCase();
+            if (!"admin".equals(role)) {
+                return Result.error("权限不足，只有管理员可以删除文档");
+            }
+
             // 1. 验证文档是否存在
             Document document = documentMapper.selectById(docId);
             if (document == null) {
@@ -452,7 +489,22 @@ public class DocumentServiceImpl implements DocumentService {
             //     return Result.error("您没有权限删除此文档，只有文档所有者可以删除");
             // }
 
-            // 3. 删除文档
+            LambdaQueryWrapper<DocumentVersion> vq = new LambdaQueryWrapper<>();
+            vq.eq(DocumentVersion::getDocId, docId);
+            documentVersionMapper.delete(vq);
+            
+            LambdaQueryWrapper<com.collab.collab_editor_backend.entity.DocPermission> pq = new LambdaQueryWrapper<>();
+            pq.eq(com.collab.collab_editor_backend.entity.DocPermission::getDocId, docId);
+            docPermissionMapper.delete(pq);
+            
+            LambdaQueryWrapper<Task> tq = new LambdaQueryWrapper<>();
+            tq.eq(Task::getDocId, docId);
+            taskMapper.delete(tq);
+            
+            LambdaQueryWrapper<Comment> cq = new LambdaQueryWrapper<>();
+            cq.eq(Comment::getDocId, docId);
+            commentMapper.delete(cq);
+            
             documentMapper.deleteById(docId);
             
             // 4. 记录操作日志
@@ -490,7 +542,7 @@ public class DocumentServiceImpl implements DocumentService {
      * @param sortOrder 排序顺序
      */
     @Override
-    public Result<?> search(Long userId, String keyword, String tags, String author, LocalDateTime startTime, LocalDateTime endTime, String sortField, String sortOrder) {
+    public Result<?> search(Long userId, String keyword, String tags, String author, LocalDateTime startTime, LocalDateTime endTime, String sortField, String sortOrder, String category, String scope) {
         try {
             // 共享模式下，不需要过滤权限
             // 获取用户有权限访问的所有文档ID列表
@@ -521,13 +573,27 @@ public class DocumentServiceImpl implements DocumentService {
             );
             */
 
-            // 添加关键字搜索条件
+            // 添加关键字搜索条件（支持范围）
             if (StringUtils.hasText(keyword)) {
                 final String searchKeyword = keyword.trim();
-                queryWrapper.and(wrapper -> 
-                    wrapper.like(Document::getTitle, searchKeyword)
-                           .or().like(Document::getContent, searchKeyword)
-                );
+                String useScope = (scope != null ? scope : "all").toLowerCase();
+                switch (useScope) {
+                    case "title_exact":
+                        queryWrapper.eq(Document::getTitle, searchKeyword);
+                        break;
+                    case "title":
+                        queryWrapper.like(Document::getTitle, searchKeyword);
+                        break;
+                    case "content":
+                        queryWrapper.like(Document::getContent, searchKeyword);
+                        break;
+                    default:
+                        queryWrapper.and(wrapper ->
+                            wrapper.like(Document::getTitle, searchKeyword)
+                                   .or().like(Document::getContent, searchKeyword)
+                        );
+                        break;
+                }
             }
 
             // 添加标签搜索
@@ -546,6 +612,11 @@ public class DocumentServiceImpl implements DocumentService {
                 }
                 List<Long> authorIds = users.stream().map(User::getId).collect(Collectors.toList());
                 queryWrapper.in(Document::getOwnerId, authorIds);
+            }
+
+            // 添加分类过滤
+            if (StringUtils.hasText(category)) {
+                queryWrapper.eq(Document::getCategory, category.trim());
             }
 
             // 添加时间范围过滤条件

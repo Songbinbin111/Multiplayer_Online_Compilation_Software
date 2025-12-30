@@ -728,7 +728,7 @@ const VideoMeetingModal: React.FC<VideoMeetingModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           bgcolor: 'background.paper',
-          backgroundImage: 'linear-gradient(to bottom, #ffffff, #f8f9fa)'
+          // backgroundImage: 'linear-gradient(to bottom, #ffffff, #f8f9fa)'
         }
       }}
     >

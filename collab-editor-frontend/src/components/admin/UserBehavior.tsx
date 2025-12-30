@@ -13,11 +13,11 @@ import {
   CircularProgress
 } from '@mui/material';
 import { activityApi } from '../../api/activityApi';
-import type { UserActivity, ActivityTypeStats } from '../../api/activityApi';
+import type { UserActivity } from '../../api/activityApi';
 
 const UserBehavior: React.FC = () => {
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
-  const [stats, setStats] = useState<ActivityTypeStats | any>(null); // Replace any with proper type if available
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,17 +27,24 @@ const UserBehavior: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 获取最近活动
       const activitiesRes = await activityApi.getRecentActivities({ limit: 20 });
-      const activities = activitiesRes.data || []; // Assuming Result wrapper
-      setRecentActivities(activities);
+      const activitiesData = activitiesRes?.data ?? activitiesRes ?? [];
+      const safeActivities = Array.isArray(activitiesData) ? activitiesData : [];
+      setRecentActivities(safeActivities);
 
-      // 获取统计数据 (Assuming we have a general stats endpoint or we can use existing ones)
-      // activityApi.getActivityStats needs userId, let's try without it if the backend supports it, 
-      // or we might need to adjust backend to support global stats. 
-      // Checking UserActivityController: getUserActivityStatistics params are optional.
       const statsRes = await activityApi.getActivityStats({});
-      setStats(statsRes.data);
+      const raw = statsRes?.data ?? statsRes ?? {};
+      const normalized = {
+        totalCount: Array.isArray(raw?.activityDistribution)
+          ? raw.activityDistribution.reduce((sum: number, i: any) => sum + (Number(i?.count) || 0), 0)
+          : 0,
+        typeDistribution: Array.isArray(raw?.activityDistribution)
+          ? Object.fromEntries(
+            raw.activityDistribution.map((i: any) => [String(i?.activityType ?? i?.type ?? '未知'), Number(i?.count) || 0])
+          )
+          : {}
+      };
+      setStats(normalized);
     } catch (error) {
       console.error('获取行为数据失败:', error);
     } finally {
@@ -86,7 +93,7 @@ const UserBehavior: React.FC = () => {
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>最近用户活动</Typography>
             <List>
-              {recentActivities.map((activity, index) => (
+              {Array.isArray(recentActivities) && recentActivities.map((activity, index) => (
                 <React.Fragment key={activity.id}>
                   {index > 0 && <Divider />}
                   <ListItem>
@@ -97,7 +104,12 @@ const UserBehavior: React.FC = () => {
                           <Typography component="span" variant="body2" color="textPrimary">
                             用户ID: {activity.userId}
                           </Typography>
-                          {" — " + (typeof activity.createdAt === 'string' ? new Date(activity.createdAt.replace(' ', 'T')).toLocaleString() : new Date(activity.createdAt).toLocaleString())}
+                          {" — " + (() => {
+                            const v = activity.createdAt as any;
+                            const s = typeof v === 'string' ? v.replace(' ', 'T') : v;
+                            const d = new Date(s);
+                            return isNaN(d.getTime()) ? String(v) : d.toLocaleString();
+                          })()}
                         </>
                       }
                     />

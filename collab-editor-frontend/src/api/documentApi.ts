@@ -15,9 +15,9 @@ export const documentApi = {
     console.log('documentApi.getCategories called');
     return api.get('/api/doc/categories');
   },
-  // 搜索文档
-  search: (keyword?: string, startDate?: string, endDate?: string, tags?: string, author?: string, sortField?: string, sortOrder?: string) => {
-    return api.get('/api/doc/search', { params: { keyword, startDate, endDate, tags, author, sortField, sortOrder } });
+  // 搜索文档（支持分类）
+  search: (keyword?: string, startDate?: string, endDate?: string, sortField?: string, sortOrder?: string, category?: string, scope?: 'title' | 'title_exact' | 'content' | 'all') => {
+    return api.get('/api/doc/search', { params: { keyword, startDate, endDate, sortField, sortOrder, category, scope } });
   },
   // 创建文档
   create: (title: string, category?: string, tags?: string, content?: string) => {

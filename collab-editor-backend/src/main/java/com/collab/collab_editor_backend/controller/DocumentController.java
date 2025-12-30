@@ -248,8 +248,10 @@ public class DocumentController {
                                   @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
                                   @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
                                   @RequestParam(required = false, defaultValue = "updateTime") String sortField,
-                                  @RequestParam(required = false, defaultValue = "desc") String sortOrder) {
+                                  @RequestParam(required = false, defaultValue = "desc") String sortOrder,
+                                  @RequestParam(required = false) String category,
+                                  @RequestParam(required = false, defaultValue = "all") String scope) {
         Long userId = jwtUtil.getUserIdFromToken(authorization);
-        return documentService.search(userId, keyword, tags, author, startTime, endTime, sortField, sortOrder);
+        return documentService.search(userId, keyword, tags, author, startTime, endTime, sortField, sortOrder, category, scope);
     }
 }

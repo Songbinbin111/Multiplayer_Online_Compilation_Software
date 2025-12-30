@@ -29,8 +29,8 @@ public interface DocumentService {
     Result<?> exportWord(Long docId, Long userId);
     // 导出为PDF文档
     Result<?> exportPdf(Long docId, String content, Long userId);
-    // 搜索文档
-    Result<?> search(Long userId, String keyword, String tags, String author, LocalDateTime startTime, LocalDateTime endTime, String sortField, String sortOrder);
+    // 搜索文档（支持分类与范围）
+    Result<?> search(Long userId, String keyword, String tags, String author, LocalDateTime startTime, LocalDateTime endTime, String sortField, String sortOrder, String category, String scope);
     // 删除文档
     Result<?> deleteDocument(Long docId, Long userId);
 }
